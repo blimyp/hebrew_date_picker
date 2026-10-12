@@ -9,6 +9,9 @@ topics:
   - hebrew
   - jewish-calendar
   - widget
+screenshots:
+  - description: "The date picker, showing the Hebrew date in every day cell."
+    path: screenshots/hebrew_date_picker.png
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

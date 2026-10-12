@@ -8,6 +8,8 @@ Gregorian one:
   (e.g. `September 2026` / `אלול–תשרי תשפ״ז`),
 * the header shows the full Hebrew date of the selected day (e.g. `א׳ תשרי תשפ״ז`).
 
+<img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="360">
+
 Hebrew dates are calculated with [kosher_dart](https://pub.dev/packages/kosher_dart) and the
 calendar grid is built on [table_calendar](https://pub.dev/packages/table_calendar).
 
