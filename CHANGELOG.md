@@ -1,3 +1,8 @@
+## Unreleased
+
+* Add `dayMode` (`DayMode.both` / `hebrew` / `gregorian`) to choose what each day cell shows.
+* Add pub.dev topics and a screenshot.
+
 ## 0.1.0
 
 * Initial release.

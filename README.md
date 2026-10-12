@@ -55,12 +55,31 @@ HebrewDatePicker(
 
 | Parameter | Default |
 |---|---|
+| `dayMode` | `DayMode.both` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
 | `helpText` | `MaterialLocalizations.datePickerHelpText` |
 | `cancelText` | `MaterialLocalizations.cancelButtonLabel` |
 | `confirmText` | `MaterialLocalizations.okButtonLabel` |
 | `locale` | the `intl` default locale |
+
+`dayMode` controls what each day cell shows:
+
+| `DayMode` | Day cell |
+|---|---|
+| `both` | the Gregorian day with the Hebrew day below it (`12` / `א׳`) |
+| `hebrew` | only the Hebrew day (`א׳`) |
+| `gregorian` | only the Gregorian day (`12`) |
+
+```dart
+showHebrewDatePicker(
+  context: context,
+  initialDate: DateTime.now(),
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  dayMode: DayMode.hebrew,
+);
+```
 
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to

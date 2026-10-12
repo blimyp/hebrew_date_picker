@@ -22,6 +22,47 @@ void main() {
     });
   });
 
+  group('DayMode', () {
+    Future<void> pumpPicker(WidgetTester tester, DayMode dayMode) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDatePicker(
+                initialDate: DateTime(2026, 9, 1),
+                firstDate: DateTime(2026, 1, 1),
+                lastDate: DateTime(2026, 12, 31),
+                dayMode: dayMode,
+                onConfirm: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 4 Sep 2026 is 22 Elul, a Hebrew day that appears only once in September 2026.
+    final hebrewDay = DateTime(2026, 9, 4).getHebrewDayOfMonth();
+
+    testWidgets('both shows the Gregorian and the Hebrew day', (tester) async {
+      await pumpPicker(tester, DayMode.both);
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text(hebrewDay), findsOneWidget);
+    });
+
+    testWidgets('hebrew shows only the Hebrew day', (tester) async {
+      await pumpPicker(tester, DayMode.hebrew);
+      expect(find.text('4'), findsNothing);
+      expect(find.text(hebrewDay), findsOneWidget);
+    });
+
+    testWidgets('gregorian shows only the Gregorian day', (tester) async {
+      await pumpPicker(tester, DayMode.gregorian);
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text(hebrewDay), findsNothing);
+    });
+  });
+
   group('HebrewDatePicker', () {
     testWidgets('confirms the tapped day', (tester) async {
       DateTime? confirmed;

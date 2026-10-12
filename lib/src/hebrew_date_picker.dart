@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import 'day_mode.dart';
 import 'hebrew_date_extension.dart';
 
 /// Shows a Material-style dialog with a [HebrewDatePicker].
@@ -13,6 +14,7 @@ Future<DateTime?> showHebrewDatePicker({
   required DateTime initialDate,
   required DateTime firstDate,
   required DateTime lastDate,
+  DayMode dayMode = DayMode.both,
   String? locale,
   String? helpText,
   String? cancelText,
@@ -36,6 +38,7 @@ Future<DateTime?> showHebrewDatePicker({
             initialDate: initialDate,
             firstDate: firstDate,
             lastDate: lastDate,
+            dayMode: dayMode,
             locale: locale,
             helpText: helpText,
             cancelText: cancelText,
@@ -64,6 +67,7 @@ class HebrewDatePicker extends StatefulWidget {
     required this.onConfirm,
     this.onCancel,
     this.onDateChanged,
+    this.dayMode = DayMode.both,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -84,6 +88,9 @@ class HebrewDatePicker extends StatefulWidget {
 
   /// Called whenever a day is tapped, before confirmation.
   final ValueChanged<DateTime>? onDateChanged;
+
+  /// What each day cell shows: the Gregorian day, the Hebrew day or both (the default).
+  final DayMode dayMode;
 
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
   /// Locales other than en_US require date formatting data to be initialized (for example
@@ -288,6 +295,11 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
         : (!enabled ? _secondaryTextColor : (today ? _primaryColor : _textColor));
     final Color hebrewDayColor =
         selected ? _onPrimaryColor : (enabled ? _textColor : _secondaryTextColor);
+    final TextStyle? mainStyle = textTheme.bodyMedium?.copyWith(
+      color: dayColor,
+      fontWeight: FontWeight.bold,
+      height: 1.1,
+    );
     return Container(
       width: 44,
       height: 44,
@@ -297,24 +309,21 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '${day.day}',
-            style: textTheme.bodyMedium?.copyWith(
-              color: dayColor,
-              fontWeight: FontWeight.bold,
-              height: 1.1,
-            ),
+      child: switch (widget.dayMode) {
+        DayMode.gregorian => Text('${day.day}', style: mainStyle),
+        DayMode.hebrew => Text(day.getHebrewDayOfMonth(), style: mainStyle),
+        DayMode.both => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${day.day}', style: mainStyle),
+              const SizedBox(height: 3),
+              Text(
+                day.getHebrewDayOfMonth(),
+                style: textTheme.labelSmall?.copyWith(height: 1, color: hebrewDayColor),
+              ),
+            ],
           ),
-          const SizedBox(height: 3),
-          Text(
-            day.getHebrewDayOfMonth(),
-            style: textTheme.labelSmall?.copyWith(height: 1, color: hebrewDayColor),
-          ),
-        ],
-      ),
+      },
     );
   }
 
