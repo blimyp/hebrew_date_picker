@@ -1,0 +1,19 @@
+name: hebrew_date_picker_example
+description: "Example app for the hebrew_date_picker package."
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hebrew_date_picker:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
