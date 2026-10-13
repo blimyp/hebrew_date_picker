@@ -215,4 +215,142 @@ void main() {
       expect(await result, DateTime(2026, 9, 12));
     });
   });
+
+  group('HebrewDateRangePicker', () {
+    Future<void> pumpPicker(
+      WidgetTester tester, {
+      ValueChanged<DateTimeRange>? onConfirm,
+      ValueChanged<DateTimeRange>? onDateRangeChanged,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDateRangePicker(
+                initialDateRange:
+                    DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)),
+                firstDate: DateTime(2026, 1, 1),
+                lastDate: DateTime(2026, 12, 31),
+                dayMode: DayMode.gregorian,
+                onConfirm: onConfirm ?? (_) {},
+                onDateRangeChanged: onDateRangeChanged,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    bool okEnabled(WidgetTester tester) =>
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'OK')).onPressed != null;
+
+    testWidgets('confirms the initial range', (tester) async {
+      DateTimeRange? confirmed;
+      await pumpPicker(tester, onConfirm: (range) => confirmed = range);
+
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)));
+    });
+
+    testWidgets('two taps select a range and enable confirm', (tester) async {
+      DateTimeRange? confirmed;
+      DateTimeRange? changed;
+      await pumpPicker(
+        tester,
+        onConfirm: (range) => confirmed = range,
+        onDateRangeChanged: (range) => changed = range,
+      );
+
+      await tester.tap(find.text('10'));
+      await tester.pump();
+      expect(okEnabled(tester), isFalse);
+      expect(changed, isNull);
+
+      await tester.tap(find.text('20'));
+      await tester.pump();
+      expect(okEnabled(tester), isTrue);
+      final expected = DateTimeRange(start: DateTime(2026, 9, 10), end: DateTime(2026, 9, 20));
+      expect(changed, expected);
+
+      await tester.tap(find.text('OK'));
+      expect(confirmed, expected);
+    });
+
+    testWidgets('a tap before the start moves the start', (tester) async {
+      DateTimeRange? confirmed;
+      await pumpPicker(tester, onConfirm: (range) => confirmed = range);
+
+      await tester.tap(find.text('20'));
+      await tester.pump();
+      await tester.tap(find.text('10'));
+      await tester.pump();
+      expect(okEnabled(tester), isFalse);
+      await tester.tap(find.text('15'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTimeRange(start: DateTime(2026, 9, 10), end: DateTime(2026, 9, 15)));
+    });
+
+    testWidgets('a range can start and end on the same day', (tester) async {
+      DateTimeRange? confirmed;
+      await pumpPicker(tester, onConfirm: (range) => confirmed = range);
+
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 12)));
+    });
+
+    testWidgets('the header shows the Hebrew dates of the range', (tester) async {
+      await pumpPicker(tester);
+      expect(
+        find.text('${DateTime(2026, 9, 1).getHebrewDateFormatted()} – '
+            '${DateTime(2026, 9, 3).getHebrewDateFormatted()}'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('showHebrewDateRangePicker returns the selected range', (tester) async {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      Future<DateTimeRange?>? result;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => result = showHebrewDateRangePicker(
+                context: context,
+                firstDate: DateTime(2026, 9, 1),
+                lastDate: DateTime(2026, 9, 30),
+                dayMode: DayMode.gregorian,
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('Start Date – End Date'), findsOneWidget);
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('14'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await result,
+        DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 14)),
+      );
+    });
+  });
 }

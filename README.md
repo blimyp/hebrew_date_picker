@@ -8,7 +8,8 @@ Gregorian one:
   (e.g. `September 2026` / `אלול–תשרי תשפ״ז`),
 * the header shows the full Hebrew date of the selected day (e.g. `א׳ תשרי תשפ״ז`),
 * tapping the month title opens a year grid with the Gregorian and the Hebrew years
-  (e.g. `1990` / `תש״נ–תשנ״א`), so far-away dates are a couple of taps away.
+  (e.g. `1990` / `תש״נ–תשנ״א`), so far-away dates are a couple of taps away,
+* a range picker selects a start and an end date, with the Hebrew dates of both in the header.
 
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="360">
 
@@ -52,6 +53,28 @@ HebrewDatePicker(
   onDateChanged: (date) => print('tapped $date'),
 )
 ```
+
+### Date range
+
+```dart
+final DateTimeRange? range = await showHebrewDateRangePicker(
+  context: context,
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  initialDateRange: DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 20)),
+);
+```
+
+The first tap picks the start of the range and the second tap picks its end; a tap before the
+start moves the start instead. A range may start and end on the same day. `initialDateRange` is
+optional, and the confirm button stays disabled until both ends are selected. The future
+completes with the selected range (times stripped), or `null` if the picker was canceled or
+dismissed.
+
+`HebrewDateRangePicker` is the embeddable widget, with `onConfirm`, `onCancel` and
+`onDateRangeChanged` (called whenever a complete range is tapped). It takes the same
+customization parameters as `HebrewDatePicker`; `helpText` defaults to
+`MaterialLocalizations.dateRangePickerHelpText`.
 
 ### Customization
 

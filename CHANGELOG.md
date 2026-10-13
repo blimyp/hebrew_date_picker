@@ -1,3 +1,8 @@
+## Unreleased
+
+* Add `HebrewDateRangePicker` and `showHebrewDateRangePicker` to pick a range of dates. The
+  header shows the Hebrew dates of the start and the end of the range.
+
 ## 0.1.1
 
 * Add `dayMode` (`DayMode.both` / `hebrew` / `gregorian`) to choose what each day cell shows.

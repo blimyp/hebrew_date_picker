@@ -25,7 +25,77 @@ Future<DateTime?> showHebrewDatePicker({
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) {
-  return showDialog<DateTime>(
+  return _showPickerDialog<DateTime>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    useRootNavigator: useRootNavigator,
+    builder: (dialogContext) => HebrewDatePicker(
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      dayMode: dayMode,
+      initialDatePickerMode: initialDatePickerMode,
+      locale: locale,
+      helpText: helpText,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      primaryColor: primaryColor,
+      secondaryTextColor: secondaryTextColor,
+      onCancel: () => Navigator.of(dialogContext).pop(),
+      onConfirm: (date) => Navigator.of(dialogContext).pop(date),
+    ),
+  );
+}
+
+/// Shows a Material-style dialog with a [HebrewDateRangePicker].
+///
+/// Completes with the selected range (times stripped), or null if the picker was canceled
+/// or dismissed.
+Future<DateTimeRange?> showHebrewDateRangePicker({
+  required BuildContext context,
+  DateTimeRange? initialDateRange,
+  required DateTime firstDate,
+  required DateTime lastDate,
+  DayMode dayMode = DayMode.both,
+  DatePickerMode initialDatePickerMode = DatePickerMode.day,
+  String? locale,
+  String? helpText,
+  String? cancelText,
+  String? confirmText,
+  Color? primaryColor,
+  Color? secondaryTextColor,
+  bool barrierDismissible = true,
+  bool useRootNavigator = true,
+}) {
+  return _showPickerDialog<DateTimeRange>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    useRootNavigator: useRootNavigator,
+    builder: (dialogContext) => HebrewDateRangePicker(
+      initialDateRange: initialDateRange,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      dayMode: dayMode,
+      initialDatePickerMode: initialDatePickerMode,
+      locale: locale,
+      helpText: helpText,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      primaryColor: primaryColor,
+      secondaryTextColor: secondaryTextColor,
+      onCancel: () => Navigator.of(dialogContext).pop(),
+      onConfirm: (range) => Navigator.of(dialogContext).pop(range),
+    ),
+  );
+}
+
+Future<T?> _showPickerDialog<T>({
+  required BuildContext context,
+  required bool barrierDismissible,
+  required bool useRootNavigator,
+  required WidgetBuilder builder,
+}) {
+  return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
@@ -34,23 +104,7 @@ Future<DateTime?> showHebrewDatePicker({
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
-        child: SingleChildScrollView(
-          child: HebrewDatePicker(
-            initialDate: initialDate,
-            firstDate: firstDate,
-            lastDate: lastDate,
-            dayMode: dayMode,
-            initialDatePickerMode: initialDatePickerMode,
-            locale: locale,
-            helpText: helpText,
-            cancelText: cancelText,
-            confirmText: confirmText,
-            primaryColor: primaryColor,
-            secondaryTextColor: secondaryTextColor,
-            onCancel: () => Navigator.of(dialogContext).pop(),
-            onConfirm: (date) => Navigator.of(dialogContext).pop(date),
-          ),
-        ),
+        child: SingleChildScrollView(child: builder(dialogContext)),
       ),
     ),
   );
@@ -60,7 +114,8 @@ Future<DateTime?> showHebrewDatePicker({
 /// the Hebrew months in the month title and the full Hebrew date of the selected day.
 ///
 /// Use [showHebrewDatePicker] to open it in a dialog, or embed it in your own container.
-class HebrewDatePicker extends StatefulWidget {
+/// To pick a range of dates, use [HebrewDateRangePicker].
+class HebrewDatePicker extends StatelessWidget {
   const HebrewDatePicker({
     super.key,
     required this.initialDate,
@@ -121,14 +176,172 @@ class HebrewDatePicker extends StatefulWidget {
   final Color? secondaryTextColor;
 
   @override
-  State<HebrewDatePicker> createState() => _HebrewDatePickerState();
+  Widget build(BuildContext context) {
+    return _CalendarPicker(
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      onConfirmDate: onConfirm,
+      onCancel: onCancel,
+      onDateChanged: onDateChanged,
+      dayMode: dayMode,
+      initialDatePickerMode: initialDatePickerMode,
+      locale: locale,
+      helpText: helpText,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      primaryColor: primaryColor,
+      secondaryTextColor: secondaryTextColor,
+    );
+  }
 }
 
-class _HebrewDatePickerState extends State<HebrewDatePicker> {
+/// Date range picker styled like the Material one, with the Hebrew date shown in every day
+/// cell, the Hebrew months in the month title and the full Hebrew dates of the selected range.
+///
+/// The first tap picks the start of the range and the second tap picks its end (or a new
+/// start, if it is before the current one). A range may start and end on the same day.
+///
+/// Use [showHebrewDateRangePicker] to open it in a dialog, or embed it in your own container.
+class HebrewDateRangePicker extends StatelessWidget {
+  const HebrewDateRangePicker({
+    super.key,
+    this.initialDateRange,
+    required this.firstDate,
+    required this.lastDate,
+    required this.onConfirm,
+    this.onCancel,
+    this.onDateRangeChanged,
+    this.dayMode = DayMode.both,
+    this.initialDatePickerMode = DatePickerMode.day,
+    this.locale,
+    this.helpText,
+    this.cancelText,
+    this.confirmText,
+    this.primaryColor,
+    this.secondaryTextColor,
+  });
+
+  /// The range selected when the picker opens. When null, no range is selected and the
+  /// calendar opens on the current month.
+  final DateTimeRange? initialDateRange;
+  final DateTime firstDate;
+  final DateTime lastDate;
+
+  /// Called with the selected range (times stripped) when the confirm button is pressed.
+  /// The confirm button is disabled until both ends of the range are selected.
+  final ValueChanged<DateTimeRange> onConfirm;
+
+  /// Called when the cancel button is pressed. The cancel button is hidden when null.
+  final VoidCallback? onCancel;
+
+  /// Called whenever a complete range is tapped, before confirmation.
+  final ValueChanged<DateTimeRange>? onDateRangeChanged;
+
+  /// What each day cell shows: the Gregorian day, the Hebrew day or both (the default).
+  final DayMode dayMode;
+
+  /// Whether the picker opens on the month calendar (the default) or on the year grid.
+  /// Tapping the month title switches between the two.
+  final DatePickerMode initialDatePickerMode;
+
+  /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
+  /// Locales other than en_US require date formatting data to be initialized (for example
+  /// via `flutter_localizations` or `initializeDateFormatting`).
+  final String? locale;
+
+  /// Defaults to [MaterialLocalizations.dateRangePickerHelpText].
+  final String? helpText;
+
+  /// Defaults to [MaterialLocalizations.cancelButtonLabel].
+  final String? cancelText;
+
+  /// Defaults to [MaterialLocalizations.okButtonLabel].
+  final String? confirmText;
+
+  /// Color of the header, the range ends, the range highlight and the buttons.
+  /// Defaults to [ColorScheme.primary].
+  final Color? primaryColor;
+
+  /// Color of secondary texts (weekday names, Hebrew months, disabled days).
+  /// Defaults to [ColorScheme.onSurfaceVariant].
+  final Color? secondaryTextColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CalendarPicker(
+      initialDateRange: initialDateRange,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      onConfirmRange: onConfirm,
+      onCancel: onCancel,
+      onDateRangeChanged: onDateRangeChanged,
+      dayMode: dayMode,
+      initialDatePickerMode: initialDatePickerMode,
+      locale: locale,
+      helpText: helpText,
+      cancelText: cancelText,
+      confirmText: confirmText,
+      primaryColor: primaryColor,
+      secondaryTextColor: secondaryTextColor,
+    );
+  }
+}
+
+/// The picker behind [HebrewDatePicker] and [HebrewDateRangePicker]. It selects a range when
+/// [onConfirmRange] is set and a single date otherwise.
+class _CalendarPicker extends StatefulWidget {
+  const _CalendarPicker({
+    this.initialDate,
+    this.initialDateRange,
+    required this.firstDate,
+    required this.lastDate,
+    this.onConfirmDate,
+    this.onConfirmRange,
+    this.onCancel,
+    this.onDateChanged,
+    this.onDateRangeChanged,
+    required this.dayMode,
+    required this.initialDatePickerMode,
+    this.locale,
+    this.helpText,
+    this.cancelText,
+    this.confirmText,
+    this.primaryColor,
+    this.secondaryTextColor,
+  }) : assert((onConfirmDate == null) != (onConfirmRange == null));
+
+  final DateTime? initialDate;
+  final DateTimeRange? initialDateRange;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final ValueChanged<DateTime>? onConfirmDate;
+  final ValueChanged<DateTimeRange>? onConfirmRange;
+  final VoidCallback? onCancel;
+  final ValueChanged<DateTime>? onDateChanged;
+  final ValueChanged<DateTimeRange>? onDateRangeChanged;
+  final DayMode dayMode;
+  final DatePickerMode initialDatePickerMode;
+  final String? locale;
+  final String? helpText;
+  final String? cancelText;
+  final String? confirmText;
+  final Color? primaryColor;
+  final Color? secondaryTextColor;
+
+  bool get rangeSelection => onConfirmRange != null;
+
+  @override
+  State<_CalendarPicker> createState() => _CalendarPickerState();
+}
+
+class _CalendarPickerState extends State<_CalendarPicker> {
   late final DateTime _firstDay = _dateOnly(widget.firstDate);
   late final DateTime _lastDay = _dateOnly(widget.lastDate);
-  late DateTime _selectedDay = _clamp(_dateOnly(widget.initialDate));
-  late DateTime _focusedDay = _selectedDay;
+  late DateTime _selectedDay = _clamp(_dateOnly(widget.initialDate ?? DateTime.now()));
+  late DateTime? _rangeStart = _initialRangeDay(widget.initialDateRange?.start);
+  late DateTime? _rangeEnd = _initialRangeDay(widget.initialDateRange?.end);
+  late DateTime _focusedDay = _rangeStart ?? _selectedDay;
   late DatePickerMode _mode = widget.initialDatePickerMode;
   PageController? _pageController;
 
@@ -136,6 +349,7 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
   static const double _daysOfWeekHeight = 32;
   static const double _yearRowHeight = 52;
   static const int _yearsPerRow = 3;
+  static const double _dayCellSize = 44;
 
   // TableCalendar uses a LayoutBuilder, which can't report intrinsic dimensions, so the
   // calendar gets a fixed height (six week rows) and the month title is built outside of
@@ -144,14 +358,25 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
 
   DateTime _dateOnly(DateTime date) => DateTime.utc(date.year, date.month, date.day);
 
+  DateTime? _initialRangeDay(DateTime? date) => date == null ? null : _clamp(_dateOnly(date));
+
   DateTime _clamp(DateTime day) {
     if (day.isBefore(_firstDay)) return _firstDay;
     if (day.isAfter(_lastDay)) return _lastDay;
     return day;
   }
 
-  DateTime get _selectedLocalDate =>
-      DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+  DateTime _localDate(DateTime day) => DateTime(day.year, day.month, day.day);
+
+  DateTime get _selectedLocalDate => _localDate(_selectedDay);
+
+  DateTimeRange? get _selectedRange => _rangeStart == null || _rangeEnd == null
+      ? null
+      : DateTimeRange(start: _localDate(_rangeStart!), end: _localDate(_rangeEnd!));
+
+  /// The year highlighted in the year grid: the selected one, or in range mode the
+  /// displayed one.
+  int get _activeYear => widget.rangeSelection ? _focusedDay.year : _selectedDay.year;
 
   Color get _primaryColor => widget.primaryColor ?? Theme.of(context).colorScheme.primary;
 
@@ -159,6 +384,8 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
       ThemeData.estimateBrightnessForColor(_primaryColor) == Brightness.dark
           ? Colors.white
           : Colors.black;
+
+  Color get _rangeHighlightColor => _primaryColor.withAlpha(0x33);
 
   Color get _textColor => Theme.of(context).colorScheme.onSurface;
 
@@ -171,7 +398,7 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _selectedDateHeader(),
+        widget.rangeSelection ? _selectedRangeHeader() : _selectedDateHeader(),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
           child: Column(
@@ -191,9 +418,8 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
     );
   }
 
-  Widget _selectedDateHeader() {
+  Widget _header({required String helpText, required String title, String? hebrewTitle}) {
     final textTheme = Theme.of(context).textTheme;
-    final localizations = MaterialLocalizations.of(context);
     return Container(
       color: _primaryColor,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
@@ -201,21 +427,46 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.helpText ?? localizations.datePickerHelpText,
-            style: textTheme.labelMedium?.copyWith(color: _onPrimaryColor),
-          ),
+          Text(helpText, style: textTheme.labelMedium?.copyWith(color: _onPrimaryColor)),
           const SizedBox(height: 16),
+          Text(title, style: textTheme.headlineSmall?.copyWith(color: _onPrimaryColor)),
+          // Keeps the header height while the Hebrew line is empty.
           Text(
-            localizations.formatMediumDate(_selectedLocalDate),
-            style: textTheme.headlineSmall?.copyWith(color: _onPrimaryColor),
-          ),
-          Text(
-            _selectedDay.getHebrewDateFormatted(),
+            hebrewTitle ?? '',
             style: textTheme.bodyMedium?.copyWith(color: _onPrimaryColor),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _selectedDateHeader() {
+    final localizations = MaterialLocalizations.of(context);
+    return _header(
+      helpText: widget.helpText ?? localizations.datePickerHelpText,
+      title: localizations.formatMediumDate(_selectedLocalDate),
+      hebrewTitle: _selectedDay.getHebrewDateFormatted(),
+    );
+  }
+
+  Widget _selectedRangeHeader() {
+    final localizations = MaterialLocalizations.of(context);
+    // Like the Material range picker: the short month and day in the current year, the short
+    // numeric date otherwise.
+    String format(DateTime day) => day.year == DateTime.now().year
+        ? localizations.formatShortMonthDay(_localDate(day))
+        : localizations.formatShortDate(_localDate(day));
+    final start = _rangeStart;
+    final end = _rangeEnd;
+    return _header(
+      helpText: widget.helpText ?? localizations.dateRangePickerHelpText,
+      title: '${start == null ? localizations.dateRangeStartLabel : format(start)} – '
+          '${end == null ? localizations.dateRangeEndLabel : format(end)}',
+      hebrewTitle: start == null
+          ? null
+          : end == null
+              ? start.getHebrewDateFormatted()
+              : '${start.getHebrewDateFormatted()} – ${end.getHebrewDateFormatted()}',
     );
   }
 
@@ -296,8 +547,8 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
   Widget _yearGrid() {
     final int firstYear = _firstDay.year;
     final int yearCount = _lastDay.year - firstYear + 1;
-    // Scroll so the selected year's row is roughly centered.
-    final int selectedRow = (_selectedDay.year - firstYear) ~/ _yearsPerRow;
+    // Scroll so the active year's row is roughly centered.
+    final int selectedRow = (_activeYear - firstYear) ~/ _yearsPerRow;
     final double contentHeight = (yearCount / _yearsPerRow).ceil() * _yearRowHeight;
     final double maxOffset = (contentHeight - _calendarHeight).clamp(0, double.infinity);
     final double offset =
@@ -315,7 +566,7 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
 
   Widget _yearCell(int year) {
     final textTheme = Theme.of(context).textTheme;
-    final bool selected = year == _selectedDay.year;
+    final bool selected = year == _activeYear;
     final bool current = year == DateTime.now().year;
     final Color color = selected ? _onPrimaryColor : (current ? _primaryColor : _textColor);
     return Padding(
@@ -351,9 +602,17 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
   }
 
   /// Moves the selection to the same day and displayed month in [year], like the Material
-  /// date picker, and goes back to the month calendar.
+  /// date picker, and goes back to the month calendar. In range mode only the displayed
+  /// month moves, so the range is kept.
   void _onYearSelected(int year) {
     final int month = _focusedDay.month;
+    if (widget.rangeSelection) {
+      setState(() {
+        _focusedDay = _clamp(DateTime.utc(year, month, 1));
+        _mode = DatePickerMode.day;
+      });
+      return;
+    }
     final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
     setState(() {
       _selectedDay = _clamp(DateTime.utc(year, month, day));
@@ -363,9 +622,26 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
     widget.onDateChanged?.call(_selectedLocalDate);
   }
 
+  /// Like the Material range picker: a tap starts a new range unless only its start is
+  /// selected, in which case it sets the end - or moves the start, if it's before it.
+  void _onRangeDayTapped(DateTime day) {
+    final start = _rangeStart;
+    setState(() {
+      if (start == null || _rangeEnd != null || day.isBefore(start)) {
+        _rangeStart = day;
+        _rangeEnd = null;
+      } else {
+        _rangeEnd = day;
+      }
+    });
+    final range = _selectedRange;
+    if (range != null) widget.onDateRangeChanged?.call(range);
+  }
+
   Widget _tableCalendar() {
     final weekdayStyle =
         Theme.of(context).textTheme.bodySmall!.copyWith(color: _secondaryTextColor);
+    final bool range = widget.rangeSelection;
     return TableCalendar(
       firstDay: _firstDay,
       lastDay: _lastDay,
@@ -385,8 +661,17 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
         outsideDaysVisible: false,
         cellMargin: EdgeInsets.zero,
       ),
-      selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+      // Range taps are handled here rather than by TableCalendar's own range selection, which
+      // doesn't allow a range that starts and ends on the same day.
+      selectedDayPredicate: range ? null : (day) => isSameDay(day, _selectedDay),
+      rangeStartDay: range ? _rangeStart : null,
+      rangeEndDay: range ? _rangeEnd : null,
       onDaySelected: (selectedDay, focusedDay) {
+        if (range) {
+          _focusedDay = focusedDay;
+          _onRangeDayTapped(selectedDay);
+          return;
+        }
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
@@ -399,7 +684,28 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
         todayBuilder: (context, day, focusedDay) => _dayCell(day, today: true),
         disabledBuilder: (context, day, focusedDay) => _dayCell(day, enabled: false),
         selectedBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
+        rangeStartBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
+        rangeEndBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
+        withinRangeBuilder: (context, day, focusedDay) => _dayCell(day),
+        rangeHighlightBuilder: (context, day, isWithinRange) =>
+            isWithinRange ? _rangeHighlight(day) : null,
       ),
+    );
+  }
+
+  /// The band behind the days of the range, which starts and ends in the middle of the
+  /// range's first and last day.
+  Widget _rangeHighlight(DateTime day) {
+    Widget half(bool visible) => Expanded(
+          child: visible
+              ? Container(height: _dayCellSize, color: _rangeHighlightColor)
+              : const SizedBox.shrink(),
+        );
+    return Row(
+      children: [
+        half(!isSameDay(day, _rangeStart)),
+        half(!isSameDay(day, _rangeEnd)),
+      ],
     );
   }
 
@@ -416,8 +722,8 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
       height: 1.1,
     );
     return Container(
-      width: 44,
-      height: 44,
+      width: _dayCellSize,
+      height: _dayCellSize,
       decoration: BoxDecoration(
         color: selected ? _primaryColor : null,
         border: today && !selected ? Border.all(color: _primaryColor) : null,
@@ -442,9 +748,19 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
     );
   }
 
+  void _confirm() {
+    final onConfirmRange = widget.onConfirmRange;
+    if (onConfirmRange != null) {
+      onConfirmRange(_selectedRange!);
+    } else {
+      widget.onConfirmDate!(_selectedLocalDate);
+    }
+  }
+
   Widget _actions() {
     final localizations = MaterialLocalizations.of(context);
     final style = TextButton.styleFrom(foregroundColor: _primaryColor);
+    final bool canConfirm = !widget.rangeSelection || _selectedRange != null;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -460,7 +776,7 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
           ],
           TextButton(
             style: style,
-            onPressed: () => widget.onConfirm(_selectedLocalDate),
+            onPressed: canConfirm ? _confirm : null,
             child: Text(widget.confirmText ?? localizations.okButtonLabel),
           ),
         ],
