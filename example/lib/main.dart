@@ -25,6 +25,7 @@ class ExamplePage extends StatefulWidget {
 
 class _ExamplePageState extends State<ExamplePage> {
   DateTime _date = DateTime.now();
+  DayMode _dayMode = DayMode.both;
 
   Future<void> _pickDate() async {
     final picked = await showHebrewDatePicker(
@@ -32,6 +33,7 @@ class _ExamplePageState extends State<ExamplePage> {
       initialDate: _date,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
+      dayMode: _dayMode,
     );
     if (picked != null) setState(() => _date = picked);
   }
@@ -49,6 +51,16 @@ class _ExamplePageState extends State<ExamplePage> {
                 style: textTheme.titleMedium),
             Text(_date.getHebrewDateFormatted(), style: textTheme.titleLarge),
             const SizedBox(height: 24),
+            SegmentedButton<DayMode>(
+              segments: const [
+                ButtonSegment(value: DayMode.both, label: Text('Both')),
+                ButtonSegment(value: DayMode.hebrew, label: Text('Hebrew')),
+                ButtonSegment(value: DayMode.gregorian, label: Text('Gregorian')),
+              ],
+              selected: {_dayMode},
+              onSelectionChanged: (modes) => setState(() => _dayMode = modes.first),
+            ),
+            const SizedBox(height: 16),
             FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
           ],
         ),
