@@ -15,6 +15,7 @@ Future<DateTime?> showHebrewDatePicker({
   required DateTime firstDate,
   required DateTime lastDate,
   DayMode dayMode = DayMode.both,
+  DatePickerMode initialDatePickerMode = DatePickerMode.day,
   String? locale,
   String? helpText,
   String? cancelText,
@@ -39,6 +40,7 @@ Future<DateTime?> showHebrewDatePicker({
             firstDate: firstDate,
             lastDate: lastDate,
             dayMode: dayMode,
+            initialDatePickerMode: initialDatePickerMode,
             locale: locale,
             helpText: helpText,
             cancelText: cancelText,
@@ -68,6 +70,7 @@ class HebrewDatePicker extends StatefulWidget {
     this.onCancel,
     this.onDateChanged,
     this.dayMode = DayMode.both,
+    this.initialDatePickerMode = DatePickerMode.day,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -91,6 +94,10 @@ class HebrewDatePicker extends StatefulWidget {
 
   /// What each day cell shows: the Gregorian day, the Hebrew day or both (the default).
   final DayMode dayMode;
+
+  /// Whether the picker opens on the month calendar (the default) or on the year grid.
+  /// Tapping the month title switches between the two.
+  final DatePickerMode initialDatePickerMode;
 
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
   /// Locales other than en_US require date formatting data to be initialized (for example
@@ -122,10 +129,13 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
   late final DateTime _lastDay = _dateOnly(widget.lastDate);
   late DateTime _selectedDay = _clamp(_dateOnly(widget.initialDate));
   late DateTime _focusedDay = _selectedDay;
+  late DatePickerMode _mode = widget.initialDatePickerMode;
   PageController? _pageController;
 
   static const double _rowHeight = 54;
   static const double _daysOfWeekHeight = 32;
+  static const double _yearRowHeight = 52;
+  static const int _yearsPerRow = 3;
 
   // TableCalendar uses a LayoutBuilder, which can't report intrinsic dimensions, so the
   // calendar gets a fixed height (six week rows) and the month title is built outside of
@@ -145,10 +155,10 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
 
   Color get _primaryColor => widget.primaryColor ?? Theme.of(context).colorScheme.primary;
 
-  Color get _onPrimaryColor => ThemeData.estimateBrightnessForColor(_primaryColor) ==
-          Brightness.dark
-      ? Colors.white
-      : Colors.black;
+  Color get _onPrimaryColor =>
+      ThemeData.estimateBrightnessForColor(_primaryColor) == Brightness.dark
+          ? Colors.white
+          : Colors.black;
 
   Color get _textColor => Theme.of(context).colorScheme.onSurface;
 
@@ -169,7 +179,10 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
             children: [
               _monthTitle(),
               const SizedBox(height: 8),
-              SizedBox(height: _calendarHeight, child: _tableCalendar()),
+              SizedBox(
+                height: _calendarHeight,
+                child: _mode == DatePickerMode.day ? _tableCalendar() : _yearGrid(),
+              ),
               _actions(),
             ],
           ),
@@ -209,43 +222,145 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
   Widget _monthTitle() {
     final textTheme = Theme.of(context).textTheme;
     final localizations = MaterialLocalizations.of(context);
-    return Row(
-      children: [
-        const SizedBox(width: 12),
-        Expanded(
+    final bool yearMode = _mode == DatePickerMode.year;
+    return ConstrainedBox(
+      // Keeps the same height when the month arrows are hidden in year mode.
+      constraints: const BoxConstraints(minHeight: 48),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Semantics(
+                button: true,
+                label: localizations.selectYearSemanticsLabel,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () =>
+                      setState(() => _mode = yearMode ? DatePickerMode.day : DatePickerMode.year),
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(12, 4, 4, 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                DateFormat.yMMMM(widget.locale).format(_focusedDay),
+                                style: textTheme.titleSmall?.copyWith(color: _textColor),
+                              ),
+                              Text(
+                                _focusedDay.getHebrewMonthsOfMonth(),
+                                style: textTheme.bodySmall?.copyWith(color: _secondaryTextColor),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          yearMode ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                          color: _secondaryTextColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (!yearMode) ...[
+            IconButton(
+              tooltip: localizations.previousMonthTooltip,
+              icon: Icon(Icons.chevron_left, color: _secondaryTextColor),
+              onPressed: () => _pageController?.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              ),
+            ),
+            IconButton(
+              tooltip: localizations.nextMonthTooltip,
+              icon: Icon(Icons.chevron_right, color: _secondaryTextColor),
+              onPressed: () => _pageController?.nextPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _yearGrid() {
+    final int firstYear = _firstDay.year;
+    final int yearCount = _lastDay.year - firstYear + 1;
+    // Scroll so the selected year's row is roughly centered.
+    final int selectedRow = (_selectedDay.year - firstYear) ~/ _yearsPerRow;
+    final double contentHeight = (yearCount / _yearsPerRow).ceil() * _yearRowHeight;
+    final double maxOffset = (contentHeight - _calendarHeight).clamp(0, double.infinity);
+    final double offset =
+        (selectedRow * _yearRowHeight - (_calendarHeight - _yearRowHeight) / 2).clamp(0, maxOffset);
+    return _YearGrid(
+      initialScrollOffset: offset,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: _yearsPerRow,
+        mainAxisExtent: _yearRowHeight,
+      ),
+      itemCount: yearCount,
+      itemBuilder: (context, index) => _yearCell(firstYear + index),
+    );
+  }
+
+  Widget _yearCell(int year) {
+    final textTheme = Theme.of(context).textTheme;
+    final bool selected = year == _selectedDay.year;
+    final bool current = year == DateTime.now().year;
+    final Color color = selected ? _onPrimaryColor : (current ? _primaryColor : _textColor);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Material(
+        color: selected ? _primaryColor : Colors.transparent,
+        shape: StadiumBorder(
+          side: current && !selected ? BorderSide(color: _primaryColor) : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _onYearSelected(year),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                DateFormat.yMMMM(widget.locale).format(_focusedDay),
-                style: textTheme.titleSmall?.copyWith(color: _textColor),
+                '$year',
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: color, fontWeight: FontWeight.bold, height: 1.1),
               ),
               Text(
-                _focusedDay.getHebrewMonthsOfMonth(),
-                style: textTheme.bodySmall?.copyWith(color: _secondaryTextColor),
+                DateTime(year).getHebrewYearsOfYear(),
+                style: textTheme.labelSmall?.copyWith(
+                  color: selected ? _onPrimaryColor : _secondaryTextColor,
+                  height: 1.1,
+                ),
               ),
             ],
           ),
         ),
-        IconButton(
-          tooltip: localizations.previousMonthTooltip,
-          icon: Icon(Icons.chevron_left, color: _secondaryTextColor),
-          onPressed: () => _pageController?.previousPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          ),
-        ),
-        IconButton(
-          tooltip: localizations.nextMonthTooltip,
-          icon: Icon(Icons.chevron_right, color: _secondaryTextColor),
-          onPressed: () => _pageController?.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  /// Moves the selection to the same day and displayed month in [year], like the Material
+  /// date picker, and goes back to the month calendar.
+  void _onYearSelected(int year) {
+    final int month = _focusedDay.month;
+    final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
+    setState(() {
+      _selectedDay = _clamp(DateTime.utc(year, month, day));
+      _focusedDay = _selectedDay;
+      _mode = DatePickerMode.day;
+    });
+    widget.onDateChanged?.call(_selectedLocalDate);
   }
 
   Widget _tableCalendar() {
@@ -350,6 +465,46 @@ class _HebrewDatePickerState extends State<HebrewDatePicker> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Scrollable year grid that owns its [ScrollController], so the initial scroll position is
+/// applied once when the grid opens.
+class _YearGrid extends StatefulWidget {
+  const _YearGrid({
+    required this.initialScrollOffset,
+    required this.gridDelegate,
+    required this.itemCount,
+    required this.itemBuilder,
+  });
+
+  final double initialScrollOffset;
+  final SliverGridDelegate gridDelegate;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+
+  @override
+  State<_YearGrid> createState() => _YearGridState();
+}
+
+class _YearGridState extends State<_YearGrid> {
+  late final ScrollController _controller =
+      ScrollController(initialScrollOffset: widget.initialScrollOffset);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      controller: _controller,
+      gridDelegate: widget.gridDelegate,
+      itemCount: widget.itemCount,
+      itemBuilder: widget.itemBuilder,
     );
   }
 }

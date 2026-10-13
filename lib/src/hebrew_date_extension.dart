@@ -29,4 +29,12 @@ extension HebrewDateExtension on DateTime {
     if (firstMonth == lastMonth) return '$firstMonth $lastYear';
     return '$firstMonth–$lastMonth $lastYear';
   }
+
+  /// The Hebrew years covered by this Gregorian year, e.g. "תש״ן–תשנ״א".
+  String getHebrewYearsOfYear() {
+    final first = DateTime(year, 1, 1)._jewishDate.getJewishYear();
+    final last = DateTime(year, 12, 31)._jewishDate.getJewishYear();
+    return '${_hebrewFormatter.formatHebrewNumber(first)}–'
+        '${_hebrewFormatter.formatHebrewNumber(last)}';
+  }
 }

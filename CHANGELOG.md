@@ -1,6 +1,9 @@
 ## Unreleased
 
 * Add `dayMode` (`DayMode.both` / `hebrew` / `gregorian`) to choose what each day cell shows.
+* Tap the month title to pick a year from a grid that shows the Gregorian and the Hebrew
+  years. Add `initialDatePickerMode` to open the picker on the year grid.
+* Add `getHebrewYearsOfYear` to `HebrewDateExtension`.
 * Add pub.dev topics and a screenshot.
 
 ## 0.1.0

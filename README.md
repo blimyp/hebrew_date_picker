@@ -6,7 +6,9 @@ Gregorian one:
 * every day cell shows the Gregorian day and the Hebrew day in letters (e.g. `12` / `א׳`),
 * the month title shows the Gregorian month and the Hebrew months it covers
   (e.g. `September 2026` / `אלול–תשרי תשפ״ז`),
-* the header shows the full Hebrew date of the selected day (e.g. `א׳ תשרי תשפ״ז`).
+* the header shows the full Hebrew date of the selected day (e.g. `א׳ תשרי תשפ״ז`),
+* tapping the month title opens a year grid with the Gregorian and the Hebrew years
+  (e.g. `1990` / `תש״נ–תשנ״א`), so far-away dates are a couple of taps away.
 
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="360">
 
@@ -56,6 +58,7 @@ HebrewDatePicker(
 | Parameter | Default |
 |---|---|
 | `dayMode` | `DayMode.both` |
+| `initialDatePickerMode` | `DatePickerMode.day` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
 | `helpText` | `MaterialLocalizations.datePickerHelpText` |
@@ -81,6 +84,19 @@ showHebrewDatePicker(
 );
 ```
 
+`initialDatePickerMode: DatePickerMode.year` opens the picker on the year grid, which suits
+dates far from today such as a birth date:
+
+```dart
+showHebrewDatePicker(
+  context: context,
+  initialDate: DateTime(1990, 1, 1),
+  firstDate: DateTime(1900),
+  lastDate: DateTime.now(),
+  initialDatePickerMode: DatePickerMode.year,
+);
+```
+
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to
 your app or calling `initializeDateFormatting()` from `package:intl/date_symbol_data_local.dart`.
@@ -93,6 +109,7 @@ The `DateTime` extension used by the picker is exported as well:
 DateTime(2026, 9, 12).getHebrewDateFormatted(); // א׳ תשרי תשפ״ז
 DateTime(2026, 9, 12).getHebrewDayOfMonth();    // א׳
 DateTime(2026, 9, 1).getHebrewMonthsOfMonth();  // אלול–תשרי תשפ״ז
+DateTime(1990).getHebrewYearsOfYear();          // תש״נ–תשנ״א
 ```
 
 ## Example

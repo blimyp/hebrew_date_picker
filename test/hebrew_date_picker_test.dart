@@ -20,6 +20,69 @@ void main() {
       expect(months, contains('אלול'));
       expect(months, contains('תשרי'));
     });
+
+    test('lists the Hebrew years covered by a Gregorian year', () {
+      expect(DateTime(1990).getHebrewYearsOfYear(), 'תש״נ–תשנ״א');
+    });
+  });
+
+  group('Year picker', () {
+    Future<void> pumpPicker(
+      WidgetTester tester, {
+      DatePickerMode initialDatePickerMode = DatePickerMode.day,
+      ValueChanged<DateTime>? onConfirm,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDatePicker(
+                initialDate: DateTime(2026, 9, 12),
+                firstDate: DateTime(1980, 1, 1),
+                lastDate: DateTime(2030, 12, 31),
+                initialDatePickerMode: initialDatePickerMode,
+                onConfirm: onConfirm ?? (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('tapping the month title opens the year grid', (tester) async {
+      await pumpPicker(tester);
+      expect(find.text('2026'), findsNothing);
+
+      await tester.tap(find.text('September 2026'));
+      await tester.pump();
+
+      expect(find.text('2026'), findsOneWidget);
+      expect(find.text(DateTime(2026).getHebrewYearsOfYear()), findsOneWidget);
+    });
+
+    testWidgets('selecting a year keeps the day and month', (tester) async {
+      DateTime? confirmed;
+      await pumpPicker(
+        tester,
+        initialDatePickerMode: DatePickerMode.year,
+        onConfirm: (date) => confirmed = date,
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('1990'),
+        -100,
+        scrollable: find.descendant(of: find.byType(GridView), matching: find.byType(Scrollable)),
+      );
+      // scrollUntilVisible stops as soon as 1990 is built, which can be under the grid's edge.
+      await tester.drag(find.byType(GridView), const Offset(0, 100));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1990'));
+      await tester.pump();
+
+      expect(find.text('September 1990'), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      expect(confirmed, DateTime(1990, 9, 12));
+    });
   });
 
   group('DayMode', () {
