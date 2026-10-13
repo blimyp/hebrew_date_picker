@@ -1,6 +1,6 @@
 ﻿name: hebrew_date_picker
 description: "A Material-style date picker that shows the Hebrew (Jewish) date in every day cell, the Hebrew months in the month title and the full Hebrew date of the selected day."
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/blimyp/hebrew_date_picker
 issue_tracker: https://github.com/blimyp/hebrew_date_picker/issues
 topics:

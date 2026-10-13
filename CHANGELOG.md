@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.1
 
 * Add `dayMode` (`DayMode.both` / `hebrew` / `gregorian`) to choose what each day cell shows.
 * Tap the month title to pick a year from a grid that shows the Gregorian and the Hebrew
