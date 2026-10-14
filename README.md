@@ -82,12 +82,14 @@ customization parameters as `HebrewDatePicker`; `helpText` defaults to
 |---|---|
 | `dayMode` | `DayMode.both` |
 | `selectableDayPredicate` | every day is selectable |
+| `showTodayButton` | `false` |
 | `initialDatePickerMode` | `DatePickerMode.day` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
 | `helpText` | `MaterialLocalizations.datePickerHelpText` |
 | `cancelText` | `MaterialLocalizations.cancelButtonLabel` |
 | `confirmText` | `MaterialLocalizations.okButtonLabel` |
+| `todayText` | `MaterialLocalizations.currentDateLabel` |
 | `locale` | the `intl` default locale |
 
 `dayMode` controls what each day cell shows:
@@ -135,6 +137,10 @@ showHebrewDatePicker(
   selectableDayPredicate: (day) => day.weekday != DateTime.saturday,
 );
 ```
+
+`showTodayButton: true` adds a button next to the cancel and confirm buttons that jumps to
+today's month and selects today (in the range picker, as the start of a new range). It is
+disabled when today is outside `firstDate`–`lastDate` or isn't selectable.
 
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to

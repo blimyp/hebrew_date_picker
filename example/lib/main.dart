@@ -28,6 +28,7 @@ class _ExamplePageState extends State<ExamplePage> {
   DateTimeRange? _range;
   DayMode _dayMode = DayMode.both;
   bool _disableSaturdays = false;
+  bool _showTodayButton = false;
 
   bool _isSelectable(DateTime day) => !_disableSaturdays || day.weekday != DateTime.saturday;
 
@@ -39,6 +40,7 @@ class _ExamplePageState extends State<ExamplePage> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
+      showTodayButton: _showTodayButton,
       dayMode: _dayMode,
     );
     if (picked != null) setState(() => _date = picked);
@@ -55,6 +57,7 @@ class _ExamplePageState extends State<ExamplePage> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
+      showTodayButton: _showTodayButton,
       dayMode: _dayMode,
     );
     if (picked != null) setState(() => _range = picked);
@@ -87,6 +90,14 @@ class _ExamplePageState extends State<ExamplePage> {
                 title: const Text('Disable Saturdays'),
                 value: _disableSaturdays,
                 onChanged: (value) => setState(() => _disableSaturdays = value),
+              ),
+            ),
+            SizedBox(
+              width: 280,
+              child: SwitchListTile(
+                title: const Text('Show today button'),
+                value: _showTodayButton,
+                onChanged: (value) => setState(() => _showTodayButton = value),
               ),
             ),
             const SizedBox(height: 40),

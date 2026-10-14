@@ -17,10 +17,12 @@ Future<DateTime?> showHebrewDatePicker({
   SelectableDayPredicate? selectableDayPredicate,
   DayMode dayMode = DayMode.both,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
+  bool showTodayButton = false,
   String? locale,
   String? helpText,
   String? cancelText,
   String? confirmText,
+  String? todayText,
   Color? primaryColor,
   Color? secondaryTextColor,
   bool barrierDismissible = true,
@@ -37,10 +39,12 @@ Future<DateTime?> showHebrewDatePicker({
       selectableDayPredicate: selectableDayPredicate,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
+      showTodayButton: showTodayButton,
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
       confirmText: confirmText,
+      todayText: todayText,
       primaryColor: primaryColor,
       secondaryTextColor: secondaryTextColor,
       onCancel: () => Navigator.of(dialogContext).pop(),
@@ -61,10 +65,12 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
   SelectableDayPredicate? selectableDayPredicate,
   DayMode dayMode = DayMode.both,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
+  bool showTodayButton = false,
   String? locale,
   String? helpText,
   String? cancelText,
   String? confirmText,
+  String? todayText,
   Color? primaryColor,
   Color? secondaryTextColor,
   bool barrierDismissible = true,
@@ -81,10 +87,12 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
       selectableDayPredicate: selectableDayPredicate,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
+      showTodayButton: showTodayButton,
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
       confirmText: confirmText,
+      todayText: todayText,
       primaryColor: primaryColor,
       secondaryTextColor: secondaryTextColor,
       onCancel: () => Navigator.of(dialogContext).pop(),
@@ -131,10 +139,12 @@ class HebrewDatePicker extends StatelessWidget {
     this.onDateChanged,
     this.dayMode = DayMode.both,
     this.initialDatePickerMode = DatePickerMode.day,
+    this.showTodayButton = false,
     this.locale,
     this.helpText,
     this.cancelText,
     this.confirmText,
+    this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
   });
@@ -163,6 +173,10 @@ class HebrewDatePicker extends StatelessWidget {
   /// Tapping the month title switches between the two.
   final DatePickerMode initialDatePickerMode;
 
+  /// Whether to show a button that jumps to today and selects it. It is disabled when today
+  /// is outside [firstDate]–[lastDate] or isn't selectable. Defaults to false.
+  final bool showTodayButton;
+
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
   /// Locales other than en_US require date formatting data to be initialized (for example
   /// via `flutter_localizations` or `initializeDateFormatting`).
@@ -176,6 +190,9 @@ class HebrewDatePicker extends StatelessWidget {
 
   /// Defaults to [MaterialLocalizations.okButtonLabel].
   final String? confirmText;
+
+  /// Label of the today button. Defaults to [MaterialLocalizations.currentDateLabel].
+  final String? todayText;
 
   /// Color of the header, the selected day and the buttons. Defaults to [ColorScheme.primary].
   final Color? primaryColor;
@@ -196,10 +213,12 @@ class HebrewDatePicker extends StatelessWidget {
       onDateChanged: onDateChanged,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
+      showTodayButton: showTodayButton,
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
       confirmText: confirmText,
+      todayText: todayText,
       primaryColor: primaryColor,
       secondaryTextColor: secondaryTextColor,
     );
@@ -225,10 +244,12 @@ class HebrewDateRangePicker extends StatelessWidget {
     this.onDateRangeChanged,
     this.dayMode = DayMode.both,
     this.initialDatePickerMode = DatePickerMode.day,
+    this.showTodayButton = false,
     this.locale,
     this.helpText,
     this.cancelText,
     this.confirmText,
+    this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
   });
@@ -261,6 +282,10 @@ class HebrewDateRangePicker extends StatelessWidget {
   /// Tapping the month title switches between the two.
   final DatePickerMode initialDatePickerMode;
 
+  /// Whether to show a button that jumps to today and selects it. It is disabled when today
+  /// is outside [firstDate]–[lastDate] or isn't selectable. Defaults to false.
+  final bool showTodayButton;
+
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
   /// Locales other than en_US require date formatting data to be initialized (for example
   /// via `flutter_localizations` or `initializeDateFormatting`).
@@ -274,6 +299,9 @@ class HebrewDateRangePicker extends StatelessWidget {
 
   /// Defaults to [MaterialLocalizations.okButtonLabel].
   final String? confirmText;
+
+  /// Label of the today button. Defaults to [MaterialLocalizations.currentDateLabel].
+  final String? todayText;
 
   /// Color of the header, the range ends, the range highlight and the buttons.
   /// Defaults to [ColorScheme.primary].
@@ -295,10 +323,12 @@ class HebrewDateRangePicker extends StatelessWidget {
       onDateRangeChanged: onDateRangeChanged,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
+      showTodayButton: showTodayButton,
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
       confirmText: confirmText,
+      todayText: todayText,
       primaryColor: primaryColor,
       secondaryTextColor: secondaryTextColor,
     );
@@ -321,10 +351,12 @@ class _CalendarPicker extends StatefulWidget {
     this.onDateRangeChanged,
     required this.dayMode,
     required this.initialDatePickerMode,
+    required this.showTodayButton,
     this.locale,
     this.helpText,
     this.cancelText,
     this.confirmText,
+    this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
   }) : assert((onConfirmDate == null) != (onConfirmRange == null));
@@ -341,10 +373,12 @@ class _CalendarPicker extends StatefulWidget {
   final ValueChanged<DateTimeRange>? onDateRangeChanged;
   final DayMode dayMode;
   final DatePickerMode initialDatePickerMode;
+  final bool showTodayButton;
   final String? locale;
   final String? helpText;
   final String? cancelText;
   final String? confirmText;
+  final String? todayText;
   final Color? primaryColor;
   final Color? secondaryTextColor;
 
@@ -794,6 +828,27 @@ class _CalendarPickerState extends State<_CalendarPicker> {
     );
   }
 
+  bool get _canSelectToday {
+    final today = _dateOnly(DateTime.now());
+    return !today.isBefore(_firstDay) && !today.isAfter(_lastDay) && _isSelectable(today);
+  }
+
+  /// Shows today's month and selects today - in range mode, as the start of a new range.
+  void _selectToday() {
+    final today = _dateOnly(DateTime.now());
+    setState(() {
+      _focusedDay = today;
+      _mode = DatePickerMode.day;
+      if (widget.rangeSelection) {
+        _rangeStart = today;
+        _rangeEnd = null;
+      } else {
+        _selectedDay = today;
+      }
+    });
+    if (!widget.rangeSelection) widget.onDateChanged?.call(_selectedLocalDate);
+  }
+
   void _confirm() {
     final onConfirmRange = widget.onConfirmRange;
     if (onConfirmRange != null) {
@@ -812,6 +867,14 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          if (widget.showTodayButton) ...[
+            TextButton(
+              style: style,
+              onPressed: _canSelectToday ? _selectToday : null,
+              child: Text(widget.todayText ?? localizations.currentDateLabel),
+            ),
+            const Spacer(),
+          ],
           if (widget.onCancel != null) ...[
             TextButton(
               style: style,

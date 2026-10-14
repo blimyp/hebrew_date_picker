@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_date_picker/hebrew_date_picker.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   group('HebrewDateExtension', () {
@@ -298,6 +299,107 @@ void main() {
       )));
 
       expect(tester.takeException(), isAssertionError);
+    });
+  });
+
+  group('Today button', () {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final firstDate = DateTime(today.year - 2);
+    final lastDate = DateTime(today.year + 2, 12, 31);
+    // Far enough from today to be on another month.
+    final otherDay = DateTime(today.year - 1, 1, 1);
+
+    Widget wrap(Widget picker) => MaterialApp(
+          home: Scaffold(body: SingleChildScrollView(child: picker)),
+        );
+
+    bool todayEnabled(WidgetTester tester) =>
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'Today')).onPressed != null;
+
+    testWidgets('is hidden by default', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: otherDay,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        onConfirm: (_) {},
+      )));
+      expect(find.text('Today'), findsNothing);
+    });
+
+    testWidgets('shows and selects today', (tester) async {
+      DateTime? confirmed;
+      DateTime? changed;
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: otherDay,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        initialDatePickerMode: DatePickerMode.year,
+        showTodayButton: true,
+        onDateChanged: (date) => changed = date,
+        onConfirm: (date) => confirmed = date,
+      )));
+
+      await tester.tap(find.text('Today'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(DateFormat.yMMMM().format(today)), findsOneWidget);
+      expect(changed, today);
+      await tester.tap(find.text('OK'));
+      expect(confirmed, today);
+    });
+
+    testWidgets('starts a new range from today', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDateRangePicker(
+        initialDateRange: DateTimeRange(start: otherDay, end: otherDay.add(const Duration(days: 2))),
+        firstDate: firstDate,
+        lastDate: lastDate,
+        showTodayButton: true,
+        onConfirm: (_) {},
+      )));
+
+      await tester.tap(find.text('Today'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(today.getHebrewDateFormatted()), findsOneWidget);
+      expect(
+        tester.widget<TextButton>(find.widgetWithText(TextButton, 'OK')).onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('is disabled when today is not selectable', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: otherDay,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        showTodayButton: true,
+        selectableDayPredicate: (day) => day != today,
+        onConfirm: (_) {},
+      )));
+      expect(todayEnabled(tester), isFalse);
+    });
+
+    testWidgets('is disabled when today is out of range', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: DateTime(2000, 1, 1),
+        firstDate: DateTime(2000, 1, 1),
+        lastDate: DateTime(2000, 12, 31),
+        showTodayButton: true,
+        onConfirm: (_) {},
+      )));
+      expect(todayEnabled(tester), isFalse);
+    });
+
+    testWidgets('uses todayText', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: otherDay,
+        firstDate: firstDate,
+        lastDate: lastDate,
+        showTodayButton: true,
+        todayText: 'היום',
+        onConfirm: (_) {},
+      )));
+      expect(find.text('היום'), findsOneWidget);
     });
   });
 
