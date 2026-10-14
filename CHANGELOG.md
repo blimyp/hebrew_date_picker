@@ -1,9 +1,10 @@
-## Unreleased
+## 0.2.0
 
 * Add `HebrewDateRangePicker` and `showHebrewDateRangePicker` to pick a range of dates. The
   header shows the Hebrew dates of the start and the end of the range.
 * Add `selectableDayPredicate` to disable days that can't be picked.
 * Add `showTodayButton` and `todayText` for a button that jumps to today and selects it.
+* Add a screenshot of the range picker.
 
 ## 0.1.1
 
