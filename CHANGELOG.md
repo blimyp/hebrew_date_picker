@@ -2,6 +2,7 @@
 
 * Add `HebrewDateRangePicker` and `showHebrewDateRangePicker` to pick a range of dates. The
   header shows the Hebrew dates of the start and the end of the range.
+* Add `selectableDayPredicate` to disable days that can't be picked.
 
 ## 0.1.1
 

@@ -27,24 +27,34 @@ class _ExamplePageState extends State<ExamplePage> {
   DateTime _date = DateTime.now();
   DateTimeRange? _range;
   DayMode _dayMode = DayMode.both;
+  bool _disableSaturdays = false;
+
+  bool _isSelectable(DateTime day) => !_disableSaturdays || day.weekday != DateTime.saturday;
 
   Future<void> _pickDate() async {
     final picked = await showHebrewDatePicker(
       context: context,
-      initialDate: _date,
+      // The initial date must be selectable.
+      initialDate: _isSelectable(_date) ? _date : _date.add(const Duration(days: 1)),
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
+      selectableDayPredicate: _isSelectable,
       dayMode: _dayMode,
     );
     if (picked != null) setState(() => _date = picked);
   }
 
   Future<void> _pickRange() async {
+    final range = _range;
     final picked = await showHebrewDateRangePicker(
       context: context,
-      initialDateRange: _range,
+      // Both ends of the initial range must be selectable.
+      initialDateRange: range != null && _isSelectable(range.start) && _isSelectable(range.end)
+          ? range
+          : null,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
+      selectableDayPredicate: _isSelectable,
       dayMode: _dayMode,
     );
     if (picked != null) setState(() => _range = picked);
@@ -69,6 +79,15 @@ class _ExamplePageState extends State<ExamplePage> {
               ],
               selected: {_dayMode},
               onSelectionChanged: (modes) => setState(() => _dayMode = modes.first),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 280,
+              child: SwitchListTile(
+                title: const Text('Disable Saturdays'),
+                value: _disableSaturdays,
+                onChanged: (value) => setState(() => _disableSaturdays = value),
+              ),
             ),
             const SizedBox(height: 40),
             FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),

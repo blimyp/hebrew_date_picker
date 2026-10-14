@@ -81,6 +81,7 @@ customization parameters as `HebrewDatePicker`; `helpText` defaults to
 | Parameter | Default |
 |---|---|
 | `dayMode` | `DayMode.both` |
+| `selectableDayPredicate` | every day is selectable |
 | `initialDatePickerMode` | `DatePickerMode.day` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
@@ -117,6 +118,21 @@ showHebrewDatePicker(
   firstDate: DateTime(1900),
   lastDate: DateTime.now(),
   initialDatePickerMode: DatePickerMode.year,
+);
+```
+
+`selectableDayPredicate` decides which days can be picked. Days for which it returns `false`
+are shown disabled and can't be tapped. The initial date (or both ends of the initial range)
+must satisfy it. In the range picker it applies to the ends of the range, which may span
+disabled days. For example, to disable Saturdays:
+
+```dart
+showHebrewDatePicker(
+  context: context,
+  initialDate: DateTime(2026, 9, 1),
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  selectableDayPredicate: (day) => day.weekday != DateTime.saturday,
 );
 ```
 

@@ -14,6 +14,7 @@ Future<DateTime?> showHebrewDatePicker({
   required DateTime initialDate,
   required DateTime firstDate,
   required DateTime lastDate,
+  SelectableDayPredicate? selectableDayPredicate,
   DayMode dayMode = DayMode.both,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   String? locale,
@@ -33,6 +34,7 @@ Future<DateTime?> showHebrewDatePicker({
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      selectableDayPredicate: selectableDayPredicate,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
       locale: locale,
@@ -56,6 +58,7 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
   DateTimeRange? initialDateRange,
   required DateTime firstDate,
   required DateTime lastDate,
+  SelectableDayPredicate? selectableDayPredicate,
   DayMode dayMode = DayMode.both,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   String? locale,
@@ -75,6 +78,7 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
       initialDateRange: initialDateRange,
       firstDate: firstDate,
       lastDate: lastDate,
+      selectableDayPredicate: selectableDayPredicate,
       dayMode: dayMode,
       initialDatePickerMode: initialDatePickerMode,
       locale: locale,
@@ -121,6 +125,7 @@ class HebrewDatePicker extends StatelessWidget {
     required this.initialDate,
     required this.firstDate,
     required this.lastDate,
+    this.selectableDayPredicate,
     required this.onConfirm,
     this.onCancel,
     this.onDateChanged,
@@ -137,6 +142,10 @@ class HebrewDatePicker extends StatelessWidget {
   final DateTime initialDate;
   final DateTime firstDate;
   final DateTime lastDate;
+
+  /// Decides which days can be selected; days for which it returns false are shown disabled.
+  /// It is called with dates without a time. [initialDate] must satisfy it.
+  final SelectableDayPredicate? selectableDayPredicate;
 
   /// Called with the selected date (time stripped) when the confirm button is pressed.
   final ValueChanged<DateTime> onConfirm;
@@ -171,7 +180,7 @@ class HebrewDatePicker extends StatelessWidget {
   /// Color of the header, the selected day and the buttons. Defaults to [ColorScheme.primary].
   final Color? primaryColor;
 
-  /// Color of secondary texts (weekday names, Hebrew months, disabled days).
+  /// Color of secondary texts (weekday names, Hebrew months).
   /// Defaults to [ColorScheme.onSurfaceVariant].
   final Color? secondaryTextColor;
 
@@ -181,6 +190,7 @@ class HebrewDatePicker extends StatelessWidget {
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      selectableDayPredicate: selectableDayPredicate,
       onConfirmDate: onConfirm,
       onCancel: onCancel,
       onDateChanged: onDateChanged,
@@ -209,6 +219,7 @@ class HebrewDateRangePicker extends StatelessWidget {
     this.initialDateRange,
     required this.firstDate,
     required this.lastDate,
+    this.selectableDayPredicate,
     required this.onConfirm,
     this.onCancel,
     this.onDateRangeChanged,
@@ -227,6 +238,11 @@ class HebrewDateRangePicker extends StatelessWidget {
   final DateTimeRange? initialDateRange;
   final DateTime firstDate;
   final DateTime lastDate;
+
+  /// Decides which days can be selected as the start or the end of the range; days for which
+  /// it returns false are shown disabled, but a range may span them. It is called with dates
+  /// without a time. Both ends of [initialDateRange] must satisfy it.
+  final SelectableDayPredicate? selectableDayPredicate;
 
   /// Called with the selected range (times stripped) when the confirm button is pressed.
   /// The confirm button is disabled until both ends of the range are selected.
@@ -263,7 +279,7 @@ class HebrewDateRangePicker extends StatelessWidget {
   /// Defaults to [ColorScheme.primary].
   final Color? primaryColor;
 
-  /// Color of secondary texts (weekday names, Hebrew months, disabled days).
+  /// Color of secondary texts (weekday names, Hebrew months).
   /// Defaults to [ColorScheme.onSurfaceVariant].
   final Color? secondaryTextColor;
 
@@ -273,6 +289,7 @@ class HebrewDateRangePicker extends StatelessWidget {
       initialDateRange: initialDateRange,
       firstDate: firstDate,
       lastDate: lastDate,
+      selectableDayPredicate: selectableDayPredicate,
       onConfirmRange: onConfirm,
       onCancel: onCancel,
       onDateRangeChanged: onDateRangeChanged,
@@ -296,6 +313,7 @@ class _CalendarPicker extends StatefulWidget {
     this.initialDateRange,
     required this.firstDate,
     required this.lastDate,
+    this.selectableDayPredicate,
     this.onConfirmDate,
     this.onConfirmRange,
     this.onCancel,
@@ -315,6 +333,7 @@ class _CalendarPicker extends StatefulWidget {
   final DateTimeRange? initialDateRange;
   final DateTime firstDate;
   final DateTime lastDate;
+  final SelectableDayPredicate? selectableDayPredicate;
   final ValueChanged<DateTime>? onConfirmDate;
   final ValueChanged<DateTimeRange>? onConfirmRange;
   final VoidCallback? onCancel;
@@ -345,6 +364,23 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   late DatePickerMode _mode = widget.initialDatePickerMode;
   PageController? _pageController;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.rangeSelection) {
+      assert(
+        _rangeStart == null || _isSelectable(_rangeStart!),
+        'initialDateRange.start must satisfy selectableDayPredicate.',
+      );
+      assert(
+        _rangeEnd == null || _isSelectable(_rangeEnd!),
+        'initialDateRange.end must satisfy selectableDayPredicate.',
+      );
+    } else {
+      assert(_isSelectable(_selectedDay), 'initialDate must satisfy selectableDayPredicate.');
+    }
+  }
+
   static const double _rowHeight = 54;
   static const double _daysOfWeekHeight = 32;
   static const double _yearRowHeight = 52;
@@ -367,6 +403,8 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   }
 
   DateTime _localDate(DateTime day) => DateTime(day.year, day.month, day.day);
+
+  bool _isSelectable(DateTime day) => widget.selectableDayPredicate?.call(_localDate(day)) ?? true;
 
   DateTime get _selectedLocalDate => _localDate(_selectedDay);
 
@@ -391,6 +429,9 @@ class _CalendarPickerState extends State<_CalendarPicker> {
 
   Color get _secondaryTextColor =>
       widget.secondaryTextColor ?? Theme.of(context).colorScheme.onSurfaceVariant;
+
+  /// Like the Material date picker: the text color at 38% opacity.
+  Color get _disabledTextColor => _textColor.withAlpha(0x61);
 
   @override
   Widget build(BuildContext context) {
@@ -602,20 +643,21 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   }
 
   /// Moves the selection to the same day and displayed month in [year], like the Material
-  /// date picker, and goes back to the month calendar. In range mode only the displayed
-  /// month moves, so the range is kept.
+  /// date picker, and goes back to the month calendar. In range mode, or when that day isn't
+  /// selectable, only the displayed month moves, so the selection is kept.
   void _onYearSelected(int year) {
     final int month = _focusedDay.month;
-    if (widget.rangeSelection) {
+    final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
+    final DateTime newDay = _clamp(DateTime.utc(year, month, day));
+    if (widget.rangeSelection || !_isSelectable(newDay)) {
       setState(() {
         _focusedDay = _clamp(DateTime.utc(year, month, 1));
         _mode = DatePickerMode.day;
       });
       return;
     }
-    final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
     setState(() {
-      _selectedDay = _clamp(DateTime.utc(year, month, day));
+      _selectedDay = newDay;
       _focusedDay = _selectedDay;
       _mode = DatePickerMode.day;
     });
@@ -651,6 +693,7 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       sixWeekMonthsEnforced: true,
       daysOfWeekHeight: _daysOfWeekHeight,
       rowHeight: _rowHeight,
+      enabledDayPredicate: widget.selectableDayPredicate == null ? null : _isSelectable,
       onCalendarCreated: (pageController) => _pageController = pageController,
       daysOfWeekStyle: DaysOfWeekStyle(
         dowTextFormatter: (date, locale) => DateFormat.EEEEE(locale).format(date),
@@ -682,7 +725,8 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       calendarBuilders: CalendarBuilders(
         defaultBuilder: (context, day, focusedDay) => _dayCell(day),
         todayBuilder: (context, day, focusedDay) => _dayCell(day, today: true),
-        disabledBuilder: (context, day, focusedDay) => _dayCell(day, enabled: false),
+        disabledBuilder: (context, day, focusedDay) =>
+            _dayCell(day, enabled: false, today: isSameDay(day, DateTime.now())),
         selectedBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
         rangeStartBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
         rangeEndBuilder: (context, day, focusedDay) => _dayCell(day, selected: true),
@@ -713,12 +757,12 @@ class _CalendarPickerState extends State<_CalendarPicker> {
     final textTheme = Theme.of(context).textTheme;
     final Color dayColor = selected
         ? _onPrimaryColor
-        : (!enabled ? _secondaryTextColor : (today ? _primaryColor : _textColor));
+        : (!enabled ? _disabledTextColor : (today ? _primaryColor : _textColor));
     final Color hebrewDayColor =
-        selected ? _onPrimaryColor : (enabled ? _textColor : _secondaryTextColor);
+        selected ? _onPrimaryColor : (enabled ? _textColor : _disabledTextColor);
     final TextStyle? mainStyle = textTheme.bodyMedium?.copyWith(
       color: dayColor,
-      fontWeight: FontWeight.bold,
+      fontWeight: enabled ? FontWeight.bold : FontWeight.normal,
       height: 1.1,
     );
     return Container(
@@ -726,7 +770,9 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       height: _dayCellSize,
       decoration: BoxDecoration(
         color: selected ? _primaryColor : null,
-        border: today && !selected ? Border.all(color: _primaryColor) : null,
+        border: today && !selected
+            ? Border.all(color: enabled ? _primaryColor : _disabledTextColor)
+            : null,
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,

@@ -216,6 +216,91 @@ void main() {
     });
   });
 
+  group('selectableDayPredicate', () {
+    // Saturdays in September 2026: 5, 12, 19 and 26.
+    bool notSaturday(DateTime day) => day.weekday != DateTime.saturday;
+
+    Widget wrap(Widget picker) => MaterialApp(
+          home: Scaffold(body: SingleChildScrollView(child: picker)),
+        );
+
+    testWidgets('a disabled day cannot be selected', (tester) async {
+      DateTime? confirmed;
+      final calledWith = <DateTime>[];
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: DateTime(2026, 9, 1),
+        firstDate: DateTime(2026, 1, 1),
+        lastDate: DateTime(2026, 12, 31),
+        dayMode: DayMode.gregorian,
+        selectableDayPredicate: (day) {
+          calledWith.add(day);
+          return notSaturday(day);
+        },
+        onConfirm: (date) => confirmed = date,
+      )));
+
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTime(2026, 9, 1));
+      expect(calledWith, isNotEmpty);
+      expect(calledWith.every((day) => !day.isUtc && day == DateUtils.dateOnly(day)), isTrue);
+    });
+
+    testWidgets('a range may span disabled days but not end on one', (tester) async {
+      DateTimeRange? confirmed;
+      await tester.pumpWidget(wrap(HebrewDateRangePicker(
+        firstDate: DateTime(2026, 9, 1),
+        lastDate: DateTime(2026, 9, 30),
+        dayMode: DayMode.gregorian,
+        selectableDayPredicate: notSaturday,
+        onConfirm: (range) => confirmed = range,
+      )));
+
+      await tester.tap(find.text('10'));
+      await tester.pump();
+      await tester.tap(find.text('19'));
+      await tester.pump();
+      await tester.tap(find.text('20'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTimeRange(start: DateTime(2026, 9, 10), end: DateTime(2026, 9, 20)));
+    });
+
+    testWidgets('selecting a year whose day is disabled keeps the selection', (tester) async {
+      DateTime? confirmed;
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: DateTime(2026, 9, 12),
+        firstDate: DateTime(2020, 1, 1),
+        lastDate: DateTime(2030, 12, 31),
+        initialDatePickerMode: DatePickerMode.year,
+        selectableDayPredicate: (day) => day.year != 2027,
+        onConfirm: (date) => confirmed = date,
+      )));
+
+      await tester.tap(find.text('2027'));
+      await tester.pump();
+
+      expect(find.text('September 2027'), findsOneWidget);
+      await tester.tap(find.text('OK'));
+      expect(confirmed, DateTime(2026, 9, 12));
+    });
+
+    testWidgets('asserts that the initial date is selectable', (tester) async {
+      await tester.pumpWidget(wrap(HebrewDatePicker(
+        initialDate: DateTime(2026, 9, 12),
+        firstDate: DateTime(2026, 1, 1),
+        lastDate: DateTime(2026, 12, 31),
+        selectableDayPredicate: notSaturday,
+        onConfirm: (_) {},
+      )));
+
+      expect(tester.takeException(), isAssertionError);
+    });
+  });
+
   group('HebrewDateRangePicker', () {
     Future<void> pumpPicker(
       WidgetTester tester, {
