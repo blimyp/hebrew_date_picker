@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_date_picker/hebrew_date_picker.dart';
 import 'package:intl/intl.dart';
@@ -538,6 +539,353 @@ void main() {
         await result,
         DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 14)),
       );
+    });
+  });
+
+  group('Form fields', () {
+    // The default 800x600 test surface is shorter than the dialog.
+    void useTallView(WidgetTester tester) {
+      tester.view.physicalSize = const Size(800, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
+
+    Future<void> pumpField(WidgetTester tester, Widget field) {
+      useTallView(tester);
+      return tester.pumpWidget(MaterialApp(home: Scaffold(body: Form(child: field))));
+    }
+
+    testWidgets('tapping the date field opens the picker and shows the picked date',
+        (tester) async {
+      DateTime? changed;
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          initialValue: DateTime(2026, 9, 1),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          dayMode: DayMode.gregorian,
+          onChanged: (date) => changed = date,
+        ),
+      );
+      expect(find.text('Sep 1, 2026'), findsOneWidget);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(changed, DateTime(2026, 9, 12));
+      expect(find.text('Sep 12, 2026'), findsOneWidget);
+    });
+
+    testWidgets('the date field shows the Hebrew date by default', (tester) async {
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          initialValue: DateTime(2026, 9, 12, 15, 30),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+        ),
+      );
+
+      final text = tester.widget<TextField>(find.byType(TextField)).controller!.text;
+      expect(text, 'Sep 12, 2026 · ${DateTime(2026, 9, 12).getHebrewDateFormatted()}');
+    });
+
+    testWidgets('canceling the picker keeps the date field value', (tester) async {
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          initialValue: DateTime(2026, 9, 1),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          dateFormatter: (context, date) => 'day ${date.day}',
+        ),
+      );
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('day 1'), findsOneWidget);
+    });
+
+    testWidgets('the date field validates and saves through its Form', (tester) async {
+      useTallView(tester);
+      final formKey = GlobalKey<FormState>();
+      DateTime? saved;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Form(
+              key: formKey,
+              child: HebrewDateFormField(
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                validator: (date) => date == null ? 'Pick a date' : null,
+                onSaved: (date) => saved = date,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pump();
+      expect(find.text('Pick a date'), findsOneWidget);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(formKey.currentState!.validate(), isTrue);
+      formKey.currentState!.save();
+      final now = DateTime.now();
+      expect(saved, DateTime(now.year, now.month, now.day));
+    });
+
+    testWidgets('an empty date field opens the picker on a selectable day', (tester) async {
+      bool isSelectable(DateTime day) => day.day.isEven;
+      DateTime? changed;
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2035),
+          selectableDayPredicate: isSelectable,
+          onChanged: (date) => changed = date,
+        ),
+      );
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(changed, isNotNull);
+      expect(isSelectable(changed!), isTrue);
+    });
+
+    testWidgets('a disabled date field does not open the picker', (tester) async {
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          enabled: false,
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+        ),
+      );
+
+      await tester.tap(find.byType(TextField), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HebrewDatePicker), findsNothing);
+    });
+
+    testWidgets('tapping the range field opens the range picker and shows the range',
+        (tester) async {
+      DateTimeRange? changed;
+      await pumpField(
+        tester,
+        HebrewDateRangeFormField(
+          initialValue: DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          dayMode: DayMode.gregorian,
+          onChanged: (range) => changed = range,
+        ),
+      );
+      expect(find.text('Sep 1 – Sep 3, 2026'), findsOneWidget);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('14'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      expect(changed, DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 14)));
+      expect(find.text('Sep 12 – Sep 14, 2026'), findsOneWidget);
+    });
+
+    testWidgets('the date field follows a new initialValue from its parent', (tester) async {
+      var date = DateTime(2026, 9, 1);
+      late StateSetter setParentState;
+      var changes = 0;
+      await pumpField(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setParentState = setState;
+            return HebrewDateFormField(
+              initialValue: date,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              dayMode: DayMode.gregorian,
+              onChanged: (_) => changes++,
+            );
+          },
+        ),
+      );
+      expect(find.text('Sep 1, 2026'), findsOneWidget);
+
+      setParentState(() => date = DateTime(2026, 9, 20));
+      await tester.pump();
+
+      expect(find.text('Sep 20, 2026'), findsOneWidget);
+      expect(changes, 0);
+    });
+
+    testWidgets('rebuilding with the same initialValue keeps the picked date', (tester) async {
+      late StateSetter setParentState;
+      await pumpField(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setParentState = setState;
+            return HebrewDateFormField(
+              initialValue: DateTime(2026, 9, 1),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              dayMode: DayMode.gregorian,
+            );
+          },
+        ),
+      );
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      setParentState(() {});
+      await tester.pump();
+
+      expect(find.text('Sep 12, 2026'), findsOneWidget);
+    });
+
+    testWidgets('the range field follows a new initialValue from its parent', (tester) async {
+      var range = DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3));
+      late StateSetter setParentState;
+      await pumpField(
+        tester,
+        StatefulBuilder(
+          builder: (context, setState) {
+            setParentState = setState;
+            return HebrewDateRangeFormField(
+              initialValue: range,
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              dayMode: DayMode.gregorian,
+            );
+          },
+        ),
+      );
+
+      setParentState(
+        () => range = DateTimeRange(start: DateTime(2026, 9, 5), end: DateTime(2026, 9, 8)),
+      );
+      await tester.pump();
+
+      expect(find.text('Sep 5 – Sep 8, 2026'), findsOneWidget);
+    });
+
+    testWidgets('Enter and Space open the picker from a focused field', (tester) async {
+      final focusNode = FocusNode();
+      addTearDown(focusNode.dispose);
+      await pumpField(
+        tester,
+        HebrewDateFormField(
+          initialValue: DateTime(2026, 9, 1),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+          focusNode: focusNode,
+        ),
+      );
+
+      for (final key in [LogicalKeyboardKey.enter, LogicalKeyboardKey.space]) {
+        focusNode.requestFocus();
+        await tester.pump();
+        await tester.sendKeyEvent(key);
+        await tester.pumpAndSettle();
+        expect(find.byType(HebrewDatePicker), findsOneWidget, reason: '$key');
+
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(find.byType(HebrewDatePicker), findsNothing);
+      }
+    });
+
+    group('default range text', () {
+      Future<String> rangeText(WidgetTester tester, DateTimeRange range, DayMode dayMode) async {
+        await pumpField(
+          tester,
+          HebrewDateRangeFormField(
+            initialValue: range,
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            dayMode: dayMode,
+          ),
+        );
+        return tester.widget<TextField>(find.byType(TextField)).controller!.text;
+      }
+
+      testWidgets('writes a shared Hebrew month and year once', (tester) async {
+        // 1-9 Tishrei 5787.
+        final range = DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 20));
+        expect(
+          await rangeText(tester, range, DayMode.both),
+          'Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז',
+        );
+      });
+
+      testWidgets('writes a shared Hebrew year once', (tester) async {
+        // 1 Tishrei - 1 Cheshvan 5787.
+        final range = DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 10, 12));
+        final text = await rangeText(tester, range, DayMode.hebrew);
+        expect(text, startsWith('א׳ תשרי – '));
+        expect(text, endsWith('תשפ״ז'));
+        expect('תשפ״ז'.allMatches(text), hasLength(1));
+      });
+
+      testWidgets('writes both years when the range crosses a year', (tester) async {
+        // Elul 5786 - Tishrei 5787, and Dec 2026 - Jan 2027.
+        expect(
+          await rangeText(
+            tester,
+            DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 20)),
+            DayMode.hebrew,
+          ),
+          '${DateTime(2026, 9, 1).getHebrewDateFormatted()} – '
+          '${DateTime(2026, 9, 20).getHebrewDateFormatted()}',
+        );
+        expect(
+          await rangeText(
+            tester,
+            DateTimeRange(start: DateTime(2026, 12, 30), end: DateTime(2027, 1, 2)),
+            DayMode.gregorian,
+          ),
+          'Dec 30, 2026 – Jan 2, 2027',
+        );
+      });
+
+      testWidgets('writes a one-day range as a single date', (tester) async {
+        final day = DateTime(2026, 9, 12);
+        expect(
+          await rangeText(tester, DateTimeRange(start: day, end: day), DayMode.both),
+          'Sep 12, 2026 · ${day.getHebrewDateFormatted()}',
+        );
+      });
     });
   });
 }

@@ -76,6 +76,63 @@ dismissed.
 customization parameters as `HebrewDatePicker`; `helpText` defaults to
 `MaterialLocalizations.dateRangePickerHelpText`.
 
+### As a text field
+
+`HebrewDateFormField` is a read-only text field that opens the picker when tapped and shows
+the picked date, so you don't have to build one yourself. It is a `FormField`, so it works
+inside a `Form` with `validator` and `onSaved`, and on its own with `onChanged`:
+
+```dart
+HebrewDateFormField(
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  decoration: const InputDecoration(
+    labelText: 'Date',
+    suffixIcon: Icon(Icons.calendar_today),
+    border: OutlineInputBorder(),
+  ),
+  validator: (date) => date == null ? 'Pick a date' : null,
+  onChanged: (date) => print(date),
+)
+```
+
+`initialValue` is optional; while the field is empty the picker opens on today. When the
+parent rebuilds the field with a different `initialValue`, the field shows the new value, so
+it can follow a date kept elsewhere — e.g. an end date that moves with the start date:
+
+```dart
+DateTime? _endDate; // updated by onChanged and by the start date's field
+
+HebrewDateFormField(
+  initialValue: _endDate,
+  firstDate: _startDate,
+  lastDate: DateTime(2030),
+  onChanged: (date) => setState(() => _endDate = date),
+)
+```
+
+`onChanged` takes a nullable date (`ValueChanged<DateTime?>`), leaving room for clearing the
+field in a later version.
+
+The field takes the same customization parameters as `HebrewDatePicker`, plus `decoration`,
+`style`, `textAlign`, `focusNode` and `enabled`. Tapping it, or pressing Enter or Space while
+it is focused, opens the picker. By default its text follows `dayMode`: the Gregorian
+and the Hebrew date (`Oct 15, 2026 · ד׳ חשוון תשפ״ז`) for `both`, only the Hebrew date for
+`hebrew` and only the Gregorian date for `gregorian`. Pass `dateFormatter` to show something
+else:
+
+```dart
+HebrewDateFormField(
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  dateFormatter: (context, date) => date.getHebrewDateFormatted(),
+)
+```
+
+`HebrewDateRangeFormField` does the same with the range picker. Its default text writes what
+both ends share once, so both calendars fit in one field:
+`Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז`. A `dateFormatter` formats each end instead.
+
 ### Customization
 
 | Parameter | Default |

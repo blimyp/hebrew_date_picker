@@ -1,3 +1,13 @@
+## Unreleased
+
+* Add `HebrewDateFormField`: a read-only text field that opens the date picker when tapped,
+  or with Enter or Space when focused, and shows the picked date. It is a `FormField`, with
+  `validator`, `onSaved` and `onChanged`, and its text follows `dayMode` or a custom
+  `dateFormatter`. A new `initialValue` from the parent replaces the field's value, so it can
+  follow a date kept outside of it.
+* Add `HebrewDateRangeFormField`, the same for the date range picker. Its default text writes
+  what both ends share once, e.g. `Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז`.
+
 ## 0.2.0
 
 * Add `HebrewDateRangePicker` and `showHebrewDateRangePicker` to pick a range of dates. The

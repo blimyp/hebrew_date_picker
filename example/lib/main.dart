@@ -51,9 +51,8 @@ class _ExamplePageState extends State<ExamplePage> {
     final picked = await showHebrewDateRangePicker(
       context: context,
       // Both ends of the initial range must be selectable.
-      initialDateRange: range != null && _isSelectable(range.start) && _isSelectable(range.end)
-          ? range
-          : null,
+      initialDateRange:
+          range != null && _isSelectable(range.start) && _isSelectable(range.end) ? range : null,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
@@ -70,56 +69,92 @@ class _ExamplePageState extends State<ExamplePage> {
     final range = _range;
     return Scaffold(
       appBar: AppBar(title: const Text('Hebrew Date Picker')),
+      // Centered when the content fits, scrollable when it doesn't.
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SegmentedButton<DayMode>(
-              segments: const [
-                ButtonSegment(value: DayMode.both, label: Text('Both')),
-                ButtonSegment(value: DayMode.hebrew, label: Text('Hebrew')),
-                ButtonSegment(value: DayMode.gregorian, label: Text('Gregorian')),
-              ],
-              selected: {_dayMode},
-              onSelectionChanged: (modes) => setState(() => _dayMode = modes.first),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: 280,
-              child: SwitchListTile(
-                title: const Text('Disable Saturdays'),
-                value: _disableSaturdays,
-                onChanged: (value) => setState(() => _disableSaturdays = value),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SegmentedButton<DayMode>(
+                segments: const [
+                  ButtonSegment(value: DayMode.both, label: Text('Both')),
+                  ButtonSegment(value: DayMode.hebrew, label: Text('Hebrew')),
+                  ButtonSegment(value: DayMode.gregorian, label: Text('Gregorian')),
+                ],
+                selected: {_dayMode},
+                onSelectionChanged: (modes) => setState(() => _dayMode = modes.first),
               ),
-            ),
-            SizedBox(
-              width: 280,
-              child: SwitchListTile(
-                title: const Text('Show today button'),
-                value: _showTodayButton,
-                onChanged: (value) => setState(() => _showTodayButton = value),
-              ),
-            ),
-            const SizedBox(height: 40),
-            FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
-            const SizedBox(height: 12),
-            Text(localizations.formatFullDate(_date), style: textTheme.titleMedium),
-            Text(_date.getHebrewDateFormatted(), style: textTheme.titleLarge),
-            const SizedBox(height: 40),
-            FilledButton(onPressed: _pickRange, child: const Text('Pick a date range')),
-            if (range != null) ...[
               const SizedBox(height: 12),
-              Text(
-                '${localizations.formatMediumDate(range.start)} – '
-                '${localizations.formatMediumDate(range.end)}',
-                style: textTheme.titleMedium,
+              SizedBox(
+                width: 280,
+                child: SwitchListTile(
+                  title: const Text('Disable Saturdays'),
+                  value: _disableSaturdays,
+                  onChanged: (value) => setState(() => _disableSaturdays = value),
+                ),
               ),
-              Text(
-                '${range.start.getHebrewDateFormatted()} – ${range.end.getHebrewDateFormatted()}',
-                style: textTheme.titleLarge,
+              SizedBox(
+                width: 280,
+                child: SwitchListTile(
+                  title: const Text('Show today button'),
+                  value: _showTodayButton,
+                  onChanged: (value) => setState(() => _showTodayButton = value),
+                ),
+              ),
+              const SizedBox(height: 40),
+              FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
+              const SizedBox(height: 12),
+              Text(localizations.formatFullDate(_date), style: textTheme.titleMedium),
+              Text(_date.getHebrewDateFormatted(), style: textTheme.titleLarge),
+              const SizedBox(height: 40),
+              FilledButton(onPressed: _pickRange, child: const Text('Pick a date range')),
+              if (range != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${localizations.formatMediumDate(range.start)} – '
+                  '${localizations.formatMediumDate(range.end)}',
+                  style: textTheme.titleMedium,
+                ),
+                Text(
+                  '${range.start.getHebrewDateFormatted()} – ${range.end.getHebrewDateFormatted()}',
+                  style: textTheme.titleLarge,
+                ),
+              ],
+              const SizedBox(height: 40),
+              SizedBox(
+                width: 360,
+                child: HebrewDateFormField(
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2035),
+                  selectableDayPredicate: _isSelectable,
+                  showTodayButton: _showTodayButton,
+                  dayMode: _dayMode,
+                  decoration: const InputDecoration(
+                    labelText: 'Date field',
+                    suffixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: 360,
+                child: HebrewDateRangeFormField(
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2035),
+                  selectableDayPredicate: _isSelectable,
+                  showTodayButton: _showTodayButton,
+                  dayMode: _dayMode,
+                  decoration: const InputDecoration(
+                    labelText: 'Date range field',
+                    suffixIcon: Icon(Icons.date_range),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
