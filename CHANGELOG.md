@@ -1,4 +1,4 @@
-## Unreleased
+## 0.3.0
 
 * Add `HebrewDateFormField`: a read-only text field that opens the date picker when tapped,
   or with Enter or Space when focused, and shows the picked date. It is a `FormField`, with
