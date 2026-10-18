@@ -1,3 +1,10 @@
+## Unreleased
+
+* With `DayMode.hebrew` the calendar pages by Hebrew months instead of Gregorian ones: each
+  page is a whole Hebrew month, the month title shows it (e.g. `תשרי תשפ״ז`) with the
+  Gregorian months it covers below (`Sep – Oct 2026`), and the year grid lists Hebrew years
+  with their Gregorian years. Selecting a year keeps the Hebrew day and month.
+
 ## 0.3.0
 
 * Add `HebrewDateFormField`: a read-only text field that opens the date picker when tapped,

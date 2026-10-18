@@ -157,6 +157,10 @@ both ends share once, so both calendars fit in one field:
 | `hebrew` | only the Hebrew day (`א׳`) |
 | `gregorian` | only the Gregorian day (`12`) |
 
+With `DayMode.hebrew` the calendar also pages by Hebrew months: each page is a whole Hebrew
+month, the month title shows it (`תשרי תשפ״ז`) with the Gregorian months it covers below
+(`Sep – Oct 2026`), and the year grid lists Hebrew years (`תשפ״ז` / `2026–2027`).
+
 ```dart
 showHebrewDatePicker(
   context: context,

@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import 'day_mode.dart';
 import 'hebrew_date_extension.dart';
+import 'hebrew_month.dart';
 
 /// Shows a Material-style dialog with a [HebrewDatePicker].
 ///
@@ -167,6 +168,8 @@ class HebrewDatePicker extends StatelessWidget {
   final ValueChanged<DateTime>? onDateChanged;
 
   /// What each day cell shows: the Gregorian day, the Hebrew day or both (the default).
+  /// With [DayMode.hebrew] the calendar pages by Hebrew months and the year grid shows
+  /// Hebrew years.
   final DayMode dayMode;
 
   /// Whether the picker opens on the month calendar (the default) or on the year grid.
@@ -276,6 +279,8 @@ class HebrewDateRangePicker extends StatelessWidget {
   final ValueChanged<DateTimeRange>? onDateRangeChanged;
 
   /// What each day cell shows: the Gregorian day, the Hebrew day or both (the default).
+  /// With [DayMode.hebrew] the calendar pages by Hebrew months and the year grid shows
+  /// Hebrew years.
   final DayMode dayMode;
 
   /// Whether the picker opens on the month calendar (the default) or on the year grid.
@@ -448,7 +453,13 @@ class _CalendarPickerState extends State<_CalendarPicker> {
 
   /// The year highlighted in the year grid: the selected one, or in range mode the
   /// displayed one.
-  int get _activeYear => widget.rangeSelection ? _focusedDay.year : _selectedDay.year;
+  int get _activeYear => _yearOf(widget.rangeSelection ? _focusedDay : _selectedDay);
+
+  /// Whether the calendar pages by Hebrew months and the year grid lists Hebrew years.
+  bool get _hebrewMonths => widget.dayMode == DayMode.hebrew;
+
+  /// The year of [day] that the year grid lists: the Hebrew one when paging by Hebrew months.
+  int _yearOf(DateTime day) => _hebrewMonths ? HebrewMonth.of(day).year : day.year;
 
   Color get _primaryColor => widget.primaryColor ?? Theme.of(context).colorScheme.primary;
 
@@ -483,7 +494,9 @@ class _CalendarPickerState extends State<_CalendarPicker> {
               const SizedBox(height: 8),
               SizedBox(
                 height: _calendarHeight,
-                child: _mode == DatePickerMode.day ? _tableCalendar() : _yearGrid(),
+                child: _mode == DatePickerMode.year
+                    ? _yearGrid()
+                    : (_hebrewMonths ? _hebrewCalendar() : _tableCalendar()),
               ),
               _actions(),
             ],
@@ -545,10 +558,23 @@ class _CalendarPickerState extends State<_CalendarPicker> {
     );
   }
 
+  /// The Gregorian months covered by a Hebrew month, e.g. "Sep – Oct 2026".
+  String _gregorianMonthsOf(HebrewMonth month) {
+    final first = month.firstDay;
+    final last = month.lastDay;
+    final locale = widget.locale;
+    if (first.year != last.year) {
+      return '${DateFormat.yMMM(locale).format(first)} – ${DateFormat.yMMM(locale).format(last)}';
+    }
+    if (first.month == last.month) return DateFormat.yMMM(locale).format(first);
+    return '${DateFormat.MMM(locale).format(first)} – ${DateFormat.yMMM(locale).format(last)}';
+  }
+
   Widget _monthTitle() {
     final textTheme = Theme.of(context).textTheme;
     final localizations = MaterialLocalizations.of(context);
     final bool yearMode = _mode == DatePickerMode.year;
+    final HebrewMonth? hebrewMonth = _hebrewMonths ? HebrewMonth.of(_focusedDay) : null;
     return ConstrainedBox(
       // Keeps the same height when the month arrows are hidden in year mode.
       constraints: const BoxConstraints(minHeight: 48),
@@ -575,11 +601,14 @@ class _CalendarPickerState extends State<_CalendarPicker> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                DateFormat.yMMMM(widget.locale).format(_focusedDay),
+                                hebrewMonth?.title ??
+                                    DateFormat.yMMMM(widget.locale).format(_focusedDay),
                                 style: textTheme.titleSmall?.copyWith(color: _textColor),
                               ),
                               Text(
-                                _focusedDay.getHebrewMonthsOfMonth(),
+                                hebrewMonth == null
+                                    ? _focusedDay.getHebrewMonthsOfMonth()
+                                    : _gregorianMonthsOf(hebrewMonth),
                                 style: textTheme.bodySmall?.copyWith(color: _secondaryTextColor),
                               ),
                             ],
@@ -620,8 +649,8 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   }
 
   Widget _yearGrid() {
-    final int firstYear = _firstDay.year;
-    final int yearCount = _lastDay.year - firstYear + 1;
+    final int firstYear = _yearOf(_firstDay);
+    final int yearCount = _yearOf(_lastDay) - firstYear + 1;
     // Scroll so the active year's row is roughly centered.
     final int selectedRow = (_activeYear - firstYear) ~/ _yearsPerRow;
     final double contentHeight = (yearCount / _yearsPerRow).ceil() * _yearRowHeight;
@@ -642,7 +671,7 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   Widget _yearCell(int year) {
     final textTheme = Theme.of(context).textTheme;
     final bool selected = year == _activeYear;
-    final bool current = year == DateTime.now().year;
+    final bool current = year == _yearOf(DateTime.now());
     final Color color = selected ? _onPrimaryColor : (current ? _primaryColor : _textColor);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -658,12 +687,14 @@ class _CalendarPickerState extends State<_CalendarPicker> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                '$year',
+                _hebrewMonths ? HebrewMonth.formatYear(year) : '$year',
                 style: textTheme.bodyMedium
                     ?.copyWith(color: color, fontWeight: FontWeight.bold, height: 1.1),
               ),
               Text(
-                DateTime(year).getHebrewYearsOfYear(),
+                _hebrewMonths
+                    ? HebrewMonth.gregorianYearsOf(year)
+                    : DateTime(year).getHebrewYearsOfYear(),
                 style: textTheme.labelSmall?.copyWith(
                   color: selected ? _onPrimaryColor : _secondaryTextColor,
                   height: 1.1,
@@ -678,14 +709,27 @@ class _CalendarPickerState extends State<_CalendarPicker> {
 
   /// Moves the selection to the same day and displayed month in [year], like the Material
   /// date picker, and goes back to the month calendar. In range mode, or when that day isn't
-  /// selectable, only the displayed month moves, so the selection is kept.
+  /// selectable, only the displayed month moves, so the selection is kept. When paging by
+  /// Hebrew months, [year] is a Hebrew year and the day and month are the Hebrew ones.
   void _onYearSelected(int year) {
-    final int month = _focusedDay.month;
-    final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
-    final DateTime newDay = _clamp(DateTime.utc(year, month, day));
+    final DateTime newDay;
+    final DateTime monthStart;
+    if (_hebrewMonths) {
+      final month = HebrewMonth.inYear(year, HebrewMonth.of(_focusedDay).month);
+      final selectedMonth = HebrewMonth.of(_selectedDay);
+      final int day =
+          (_selectedDay.difference(selectedMonth.firstDay).inDays + 1).clamp(1, month.length);
+      newDay = _clamp(month.day(day));
+      monthStart = _clamp(month.firstDay);
+    } else {
+      final int month = _focusedDay.month;
+      final int day = _selectedDay.day.clamp(1, DateUtils.getDaysInMonth(year, month));
+      newDay = _clamp(DateTime.utc(year, month, day));
+      monthStart = _clamp(DateTime.utc(year, month, 1));
+    }
     if (widget.rangeSelection || !_isSelectable(newDay)) {
       setState(() {
-        _focusedDay = _clamp(DateTime.utc(year, month, 1));
+        _focusedDay = monthStart;
         _mode = DatePickerMode.day;
       });
       return;
@@ -695,6 +739,16 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       _focusedDay = _selectedDay;
       _mode = DatePickerMode.day;
     });
+    widget.onDateChanged?.call(_selectedLocalDate);
+  }
+
+  void _onDayTapped(DateTime day) {
+    _focusedDay = day;
+    if (widget.rangeSelection) {
+      _onRangeDayTapped(day);
+      return;
+    }
+    setState(() => _selectedDay = day);
     widget.onDateChanged?.call(_selectedLocalDate);
   }
 
@@ -743,18 +797,7 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       selectedDayPredicate: range ? null : (day) => isSameDay(day, _selectedDay),
       rangeStartDay: range ? _rangeStart : null,
       rangeEndDay: range ? _rangeEnd : null,
-      onDaySelected: (selectedDay, focusedDay) {
-        if (range) {
-          _focusedDay = focusedDay;
-          _onRangeDayTapped(selectedDay);
-          return;
-        }
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-        });
-        widget.onDateChanged?.call(_selectedLocalDate);
-      },
+      onDaySelected: (selectedDay, focusedDay) => _onDayTapped(selectedDay),
       onPageChanged: (focusedDay) => setState(() => _focusedDay = focusedDay),
       calendarBuilders: CalendarBuilders(
         defaultBuilder: (context, day, focusedDay) => _dayCell(day),
@@ -767,6 +810,50 @@ class _CalendarPickerState extends State<_CalendarPicker> {
         withinRangeBuilder: (context, day, focusedDay) => _dayCell(day),
         rangeHighlightBuilder: (context, day, isWithinRange) =>
             isWithinRange ? _rangeHighlight(day) : null,
+      ),
+    );
+  }
+
+  /// The month calendar when paging by Hebrew months, which TableCalendar can't do. It looks
+  /// and behaves like [_tableCalendar].
+  Widget _hebrewCalendar() {
+    return _HebrewMonthCalendar(
+      firstDay: _firstDay,
+      lastDay: _lastDay,
+      focusedDay: _focusedDay,
+      locale: widget.locale,
+      daysOfWeekHeight: _daysOfWeekHeight,
+      rowHeight: _rowHeight,
+      weekdayStyle: Theme.of(context).textTheme.bodySmall!.copyWith(color: _secondaryTextColor),
+      onCalendarCreated: (pageController) => _pageController = pageController,
+      onPageChanged: (month) => setState(() => _focusedDay = _clamp(month.firstDay)),
+      dayBuilder: _hebrewCalendarDay,
+    );
+  }
+
+  Widget _hebrewCalendarDay(DateTime day) {
+    final bool enabled = !day.isBefore(_firstDay) && !day.isAfter(_lastDay) && _isSelectable(day);
+    final bool range = widget.rangeSelection;
+    final start = _rangeStart;
+    final end = _rangeEnd;
+    final bool selected =
+        range ? isSameDay(day, start) || isSameDay(day, end) : isSameDay(day, _selectedDay);
+    final bool withinRange =
+        range && start != null && end != null && !day.isBefore(start) && !day.isAfter(end);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: enabled ? () => _onDayTapped(day) : null,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (withinRange) Positioned.fill(child: _rangeHighlight(day)),
+          _dayCell(
+            day,
+            enabled: enabled,
+            selected: selected,
+            today: isSameDay(day, DateTime.now()),
+          ),
+        ],
       ),
     );
   }
@@ -890,6 +977,135 @@ class _CalendarPickerState extends State<_CalendarPicker> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A paged month calendar whose months are Hebrew months, with a row of weekday names and six
+/// week rows starting on Sunday, like the TableCalendar used for Gregorian months.
+class _HebrewMonthCalendar extends StatefulWidget {
+  const _HebrewMonthCalendar({
+    required this.firstDay,
+    required this.lastDay,
+    required this.focusedDay,
+    required this.locale,
+    required this.daysOfWeekHeight,
+    required this.rowHeight,
+    required this.weekdayStyle,
+    required this.onCalendarCreated,
+    required this.onPageChanged,
+    required this.dayBuilder,
+  });
+
+  final DateTime firstDay;
+  final DateTime lastDay;
+
+  /// A day in the displayed month. The calendar jumps to its month when it changes.
+  final DateTime focusedDay;
+  final String? locale;
+  final double daysOfWeekHeight;
+  final double rowHeight;
+  final TextStyle weekdayStyle;
+  final ValueChanged<PageController> onCalendarCreated;
+  final ValueChanged<HebrewMonth> onPageChanged;
+
+  /// Builds the cell of a day of the displayed month.
+  final Widget Function(DateTime day) dayBuilder;
+
+  @override
+  State<_HebrewMonthCalendar> createState() => _HebrewMonthCalendarState();
+}
+
+class _HebrewMonthCalendarState extends State<_HebrewMonthCalendar> {
+  late final int _firstIndex = HebrewMonth.of(widget.firstDay).index;
+  late int _page = _pageOf(widget.focusedDay);
+  late final PageController _controller = PageController(initialPage: _page);
+
+  int _pageOf(DateTime day) => HebrewMonth.of(day).index - _firstIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.onCalendarCreated(_controller);
+  }
+
+  @override
+  void didUpdateWidget(_HebrewMonthCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final int page = _pageOf(widget.focusedDay);
+    if (page != _page) {
+      _page = page;
+      _controller.jumpToPage(page);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weekdayFormat = DateFormat.EEEEE(widget.locale);
+    return Column(
+      children: [
+        SizedBox(
+          height: widget.daysOfWeekHeight,
+          child: Row(
+            children: [
+              // 1 Jan 2023 is a Sunday.
+              for (int i = 0; i < 7; i++)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      weekdayFormat.format(DateTime(2023, 1, 1 + i)),
+                      style: widget.weekdayStyle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: HebrewMonth.of(widget.lastDay).index - _firstIndex + 1,
+            onPageChanged: (page) {
+              _page = page;
+              widget.onPageChanged(HebrewMonth.fromIndex(_firstIndex + page));
+            },
+            itemBuilder: (context, page) => _month(HebrewMonth.fromIndex(_firstIndex + page)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _month(HebrewMonth month) {
+    final DateTime firstDay = month.firstDay;
+    final int length = month.length;
+    // The empty cells before the first day; DateTime.sunday is 7.
+    final int offset = firstDay.weekday % 7;
+    return Column(
+      children: [
+        for (int row = 0; row < 6; row++)
+          SizedBox(
+            height: widget.rowHeight,
+            child: Row(
+              children: [
+                for (int column = 0; column < 7; column++)
+                  Expanded(
+                    child: switch (row * 7 + column - offset) {
+                      final int i when i >= 0 && i < length =>
+                        widget.dayBuilder(firstDay.add(Duration(days: i))),
+                      _ => const SizedBox.shrink(),
+                    },
+                  ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrew_date_picker/hebrew_date_picker.dart';
+import 'package:hebrew_date_picker/src/hebrew_month.dart';
 import 'package:intl/intl.dart';
+import 'package:kosher_dart/kosher_dart.dart';
 
 void main() {
   group('HebrewDateExtension', () {
@@ -125,6 +127,142 @@ void main() {
       await pumpPicker(tester, DayMode.gregorian);
       expect(find.text('4'), findsOneWidget);
       expect(find.text(hebrewDay), findsNothing);
+    });
+  });
+
+  group('HebrewMonth', () {
+    test('numbers consecutive months without gaps, across leap years', () {
+      var month = HebrewMonth.of(DateTime(2020, 1, 1));
+      for (int i = 0; i < 150; i++) {
+        final next = HebrewMonth.fromIndex(month.index + 1);
+        final first = JewishDate.fromDateTime(month.firstDay);
+        expect(first.getJewishYear(), month.year);
+        expect(first.getJewishMonth(), month.month);
+        expect(first.getJewishDayOfMonth(), 1);
+        expect(month.lastDay.difference(month.firstDay).inDays + 1, month.length);
+        expect(next.firstDay, month.lastDay.add(const Duration(days: 1)));
+        expect(HebrewMonth.of(month.lastDay).index, month.index);
+        month = next;
+      }
+    });
+
+    test('maps Adar II to Adar in a year without one', () {
+      expect(HebrewMonth.inYear(5784, 13).month, 13);
+      expect(HebrewMonth.inYear(5785, 13).month, 12);
+    });
+  });
+
+  group('Hebrew months', () {
+    Future<void> pumpPicker(
+      WidgetTester tester, {
+      DatePickerMode initialDatePickerMode = DatePickerMode.day,
+      ValueChanged<DateTime>? onConfirm,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDatePicker(
+                // 1 Tishrei 5787.
+                initialDate: DateTime(2026, 9, 12),
+                firstDate: DateTime(2020, 1, 1),
+                lastDate: DateTime(2030, 12, 31),
+                dayMode: DayMode.hebrew,
+                initialDatePickerMode: initialDatePickerMode,
+                onConfirm: onConfirm ?? (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('the month title shows the Hebrew month and its Gregorian months',
+        (tester) async {
+      await pumpPicker(tester);
+      expect(find.text('תשרי תשפ״ז'), findsOneWidget);
+      expect(find.text('Sep – Oct 2026'), findsOneWidget);
+      // The page holds only Tishrei, so its first day appears once.
+      expect(find.text('א׳'), findsOneWidget);
+    });
+
+    testWidgets('the arrows page by Hebrew months', (tester) async {
+      await pumpPicker(tester);
+
+      await tester.tap(find.byTooltip('Next month'));
+      await tester.pumpAndSettle();
+      expect(find.text('חשוון תשפ״ז'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Previous month'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Previous month'));
+      await tester.pumpAndSettle();
+      expect(find.text('אלול תשפ״ו'), findsOneWidget);
+    });
+
+    testWidgets('confirms a tapped day of the Hebrew month', (tester) async {
+      DateTime? confirmed;
+      await pumpPicker(tester, onConfirm: (date) => confirmed = date);
+
+      // 30 Tishrei 5787.
+      await tester.tap(find.text('ל׳'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTime(2026, 10, 11));
+    });
+
+    testWidgets('the year grid lists Hebrew years and keeps the Hebrew day and month',
+        (tester) async {
+      DateTime? confirmed;
+      await pumpPicker(
+        tester,
+        initialDatePickerMode: DatePickerMode.year,
+        onConfirm: (date) => confirmed = date,
+      );
+      expect(find.text('2026–2027'), findsOneWidget);
+
+      await tester.tap(find.text('תשפ״ח'));
+      await tester.pump();
+      expect(find.text('תשרי תשפ״ח'), findsOneWidget);
+      await tester.tap(find.text('OK'));
+
+      final roshHashana =
+          JewishDate.initDate(jewishYear: 5788, jewishMonth: 7, jewishDayOfMonth: 1);
+      expect(
+        confirmed,
+        DateTime(roshHashana.getGregorianYear(), roshHashana.getGregorianMonth(),
+            roshHashana.getGregorianDayOfMonth()),
+      );
+    });
+
+    testWidgets('selects a range within the Hebrew month', (tester) async {
+      DateTimeRange? confirmed;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDateRangePicker(
+                initialDateRange:
+                    DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 12)),
+                firstDate: DateTime(2026, 1, 1),
+                lastDate: DateTime(2026, 12, 31),
+                dayMode: DayMode.hebrew,
+                onConfirm: (range) => confirmed = range,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 1 and 10 Tishrei 5787.
+      await tester.tap(find.text('א׳'));
+      await tester.pump();
+      await tester.tap(find.text('י׳'));
+      await tester.pump();
+      await tester.tap(find.text('OK'));
+
+      expect(confirmed, DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 21)));
     });
   });
 
