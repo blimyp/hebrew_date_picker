@@ -26,7 +26,7 @@ class ExamplePage extends StatefulWidget {
 class _ExamplePageState extends State<ExamplePage> {
   DateTime _date = DateTime.now();
   DateTimeRange? _range;
-  DayMode _dayMode = DayMode.both;
+  CalendarMode _calendarMode = CalendarMode.both;
   bool _disableSaturdays = false;
   bool _showTodayButton = false;
 
@@ -41,7 +41,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      dayMode: _dayMode,
+      calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _date = picked);
   }
@@ -57,7 +57,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      dayMode: _dayMode,
+      calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _range = picked);
   }
@@ -76,14 +76,14 @@ class _ExamplePageState extends State<ExamplePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SegmentedButton<DayMode>(
+              SegmentedButton<CalendarMode>(
                 segments: const [
-                  ButtonSegment(value: DayMode.both, label: Text('Both')),
-                  ButtonSegment(value: DayMode.hebrew, label: Text('Hebrew')),
-                  ButtonSegment(value: DayMode.gregorian, label: Text('Gregorian')),
+                  ButtonSegment(value: CalendarMode.both, label: Text('Both')),
+                  ButtonSegment(value: CalendarMode.hebrew, label: Text('Hebrew')),
+                  ButtonSegment(value: CalendarMode.gregorian, label: Text('Gregorian')),
                 ],
-                selected: {_dayMode},
-                onSelectionChanged: (modes) => setState(() => _dayMode = modes.first),
+                selected: {_calendarMode},
+                onSelectionChanged: (modes) => setState(() => _calendarMode = modes.first),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -129,7 +129,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  dayMode: _dayMode,
+                  calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date field',
                     suffixIcon: Icon(Icons.calendar_today),
@@ -145,7 +145,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  dayMode: _dayMode,
+                  calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date range field',
                     suffixIcon: Icon(Icons.date_range),

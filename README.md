@@ -116,7 +116,7 @@ field in a later version.
 
 The field takes the same customization parameters as `HebrewDatePicker`, plus `decoration`,
 `style`, `textAlign`, `focusNode` and `enabled`. Tapping it, or pressing Enter or Space while
-it is focused, opens the picker. By default its text follows `dayMode`: the Gregorian
+it is focused, opens the picker. By default its text follows `calendarMode`: the Gregorian
 and the Hebrew date (`Oct 15, 2026 · ד׳ חשוון תשפ״ז`) for `both`, only the Hebrew date for
 `hebrew` and only the Gregorian date for `gregorian`. Pass `dateFormatter` to show something
 else:
@@ -137,7 +137,7 @@ both ends share once, so both calendars fit in one field:
 
 | Parameter | Default |
 |---|---|
-| `dayMode` | `DayMode.both` |
+| `calendarMode` | `CalendarMode.both` |
 | `selectableDayPredicate` | every day is selectable |
 | `showTodayButton` | `false` |
 | `initialDatePickerMode` | `DatePickerMode.day` |
@@ -149,7 +149,7 @@ both ends share once, so both calendars fit in one field:
 | `todayText` | `MaterialLocalizations.currentDateLabel` |
 | `locale` | the `intl` default locale |
 
-`dayMode` controls which calendar the picker shows - both, or only one of them:
+`calendarMode` controls which calendar the picker shows - both, or only one of them:
 
 | | `both` | `hebrew` | `gregorian` |
 |---|---|---|---|
@@ -160,7 +160,7 @@ both ends share once, so both calendars fit in one field:
 | Weekdays | from `locale` | `א ב ג ד ה ו ש` | from `locale` |
 | Year grid | `2026` / `תשפ״ו–תשפ״ז` | `תשפ״ז` | `2026` |
 
-With `DayMode.hebrew` each page is a whole Hebrew month, and selecting a year keeps the
+With `CalendarMode.hebrew` each page is a whole Hebrew month, and selecting a year keeps the
 Hebrew day and month.
 
 ```dart
@@ -169,7 +169,7 @@ showHebrewDatePicker(
   initialDate: DateTime.now(),
   firstDate: DateTime(2020),
   lastDate: DateTime(2030),
-  dayMode: DayMode.hebrew,
+  calendarMode: CalendarMode.hebrew,
 );
 ```
 

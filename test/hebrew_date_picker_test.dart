@@ -89,10 +89,10 @@ void main() {
     });
   });
 
-  group('DayMode', () {
+  group('CalendarMode', () {
     Future<void> pumpPicker(
       WidgetTester tester,
-      DayMode dayMode, {
+      CalendarMode calendarMode, {
       DatePickerMode initialDatePickerMode = DatePickerMode.day,
     }) {
       return tester.pumpWidget(
@@ -103,7 +103,7 @@ void main() {
                 initialDate: DateTime(2026, 9, 1),
                 firstDate: DateTime(2026, 1, 1),
                 lastDate: DateTime(2026, 12, 31),
-                dayMode: dayMode,
+                calendarMode: calendarMode,
                 initialDatePickerMode: initialDatePickerMode,
                 onConfirm: (_) {},
               ),
@@ -117,19 +117,19 @@ void main() {
     final hebrewDay = DateTime(2026, 9, 4).getHebrewDayOfMonth();
 
     testWidgets('both shows the Gregorian and the Hebrew day', (tester) async {
-      await pumpPicker(tester, DayMode.both);
+      await pumpPicker(tester, CalendarMode.both);
       expect(find.text('4'), findsOneWidget);
       expect(find.text(hebrewDay), findsOneWidget);
     });
 
     testWidgets('hebrew shows only the Hebrew day', (tester) async {
-      await pumpPicker(tester, DayMode.hebrew);
+      await pumpPicker(tester, CalendarMode.hebrew);
       expect(find.text('4'), findsNothing);
       expect(find.text(hebrewDay), findsOneWidget);
     });
 
     testWidgets('gregorian shows only the Gregorian day', (tester) async {
-      await pumpPicker(tester, DayMode.gregorian);
+      await pumpPicker(tester, CalendarMode.gregorian);
       expect(find.text('4'), findsOneWidget);
       expect(find.text(hebrewDay), findsNothing);
     });
@@ -138,21 +138,41 @@ void main() {
 
     testWidgets('both shows the Hebrew dates in the header and the month title',
         (tester) async {
-      await pumpPicker(tester, DayMode.both);
+      await pumpPicker(tester, CalendarMode.both);
       expect(find.text(DateTime(2026, 9, 1).getHebrewDateFormatted()), findsOneWidget);
       expect(find.text(DateTime(2026, 9, 1).getHebrewMonthsOfMonth()), findsOneWidget);
     });
 
     testWidgets('gregorian shows no Hebrew dates', (tester) async {
-      await pumpPicker(tester, DayMode.gregorian);
+      await pumpPicker(tester, CalendarMode.gregorian);
       expect(find.text('September 2026'), findsOneWidget);
       expect(anyHebrew, findsNothing);
     });
 
     testWidgets('gregorian shows no Hebrew years in the year grid', (tester) async {
-      await pumpPicker(tester, DayMode.gregorian, initialDatePickerMode: DatePickerMode.year);
+      await pumpPicker(tester, CalendarMode.gregorian, initialDatePickerMode: DatePickerMode.year);
       expect(find.text('2026'), findsOneWidget);
       expect(anyHebrew, findsNothing);
+    });
+
+    testWidgets('the deprecated dayMode and DayMode still work', (tester) async {
+      // ignore: deprecated_member_use_from_same_package
+      const DayMode mode = DayMode.gregorian;
+      final picker = HebrewDatePicker(
+        initialDate: DateTime(2026, 9, 1),
+        firstDate: DateTime(2026, 1, 1),
+        lastDate: DateTime(2026, 12, 31),
+        // ignore: deprecated_member_use_from_same_package
+        dayMode: mode,
+        onConfirm: (_) {},
+      );
+      expect(picker.calendarMode, CalendarMode.gregorian);
+      // ignore: deprecated_member_use_from_same_package
+      expect(picker.dayMode, CalendarMode.gregorian);
+
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: picker)));
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text(hebrewDay), findsNothing);
     });
   });
 
@@ -193,7 +213,7 @@ void main() {
                 initialDate: DateTime(2026, 9, 12),
                 firstDate: DateTime(2020, 1, 1),
                 lastDate: DateTime(2030, 12, 31),
-                dayMode: DayMode.hebrew,
+                calendarMode: CalendarMode.hebrew,
                 initialDatePickerMode: initialDatePickerMode,
                 onConfirm: onConfirm ?? (_) {},
               ),
@@ -284,7 +304,7 @@ void main() {
                     DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 12)),
                 firstDate: DateTime(2026, 1, 1),
                 lastDate: DateTime(2026, 12, 31),
-                dayMode: DayMode.hebrew,
+                calendarMode: CalendarMode.hebrew,
                 onConfirm: (range) => confirmed = range,
               ),
             ),
@@ -410,7 +430,7 @@ void main() {
         initialDate: DateTime(2026, 9, 1),
         firstDate: DateTime(2026, 1, 1),
         lastDate: DateTime(2026, 12, 31),
-        dayMode: DayMode.gregorian,
+        calendarMode: CalendarMode.gregorian,
         selectableDayPredicate: (day) {
           calledWith.add(day);
           return notSaturday(day);
@@ -432,7 +452,7 @@ void main() {
       await tester.pumpWidget(wrap(HebrewDateRangePicker(
         firstDate: DateTime(2026, 9, 1),
         lastDate: DateTime(2026, 9, 30),
-        dayMode: DayMode.gregorian,
+        calendarMode: CalendarMode.gregorian,
         selectableDayPredicate: notSaturday,
         onConfirm: (range) => confirmed = range,
       )));
@@ -586,7 +606,7 @@ void main() {
       WidgetTester tester, {
       ValueChanged<DateTimeRange>? onConfirm,
       ValueChanged<DateTimeRange>? onDateRangeChanged,
-      DayMode dayMode = DayMode.gregorian,
+      CalendarMode calendarMode = CalendarMode.gregorian,
     }) {
       return tester.pumpWidget(
         MaterialApp(
@@ -597,7 +617,7 @@ void main() {
                     DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)),
                 firstDate: DateTime(2026, 1, 1),
                 lastDate: DateTime(2026, 12, 31),
-                dayMode: dayMode,
+                calendarMode: calendarMode,
                 onConfirm: onConfirm ?? (_) {},
                 onDateRangeChanged: onDateRangeChanged,
               ),
@@ -673,7 +693,7 @@ void main() {
     });
 
     testWidgets('the header shows the Hebrew dates of the range', (tester) async {
-      await pumpPicker(tester, dayMode: DayMode.both);
+      await pumpPicker(tester, calendarMode: CalendarMode.both);
       expect(
         find.text('${DateTime(2026, 9, 1).getHebrewDateFormatted()} – '
             '${DateTime(2026, 9, 3).getHebrewDateFormatted()}'),
@@ -681,7 +701,7 @@ void main() {
       );
     });
 
-    testWidgets('the header shows no Hebrew dates with DayMode.gregorian', (tester) async {
+    testWidgets('the header shows no Hebrew dates with CalendarMode.gregorian', (tester) async {
       await pumpPicker(tester);
       expect(find.textContaining(RegExp('[א-ת]')), findsNothing);
     });
@@ -700,7 +720,7 @@ void main() {
                 context: context,
                 firstDate: DateTime(2026, 9, 1),
                 lastDate: DateTime(2026, 9, 30),
-                dayMode: DayMode.gregorian,
+                calendarMode: CalendarMode.gregorian,
               ),
               child: const Text('open'),
             ),
@@ -747,7 +767,7 @@ void main() {
           initialValue: DateTime(2026, 9, 1),
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
-          dayMode: DayMode.gregorian,
+          calendarMode: CalendarMode.gregorian,
           onChanged: (date) => changed = date,
         ),
       );
@@ -881,7 +901,7 @@ void main() {
           initialValue: DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)),
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
-          dayMode: DayMode.gregorian,
+          calendarMode: CalendarMode.gregorian,
           onChanged: (range) => changed = range,
         ),
       );
@@ -913,7 +933,7 @@ void main() {
               initialValue: date,
               firstDate: DateTime(2020),
               lastDate: DateTime(2030),
-              dayMode: DayMode.gregorian,
+              calendarMode: CalendarMode.gregorian,
               onChanged: (_) => changes++,
             );
           },
@@ -939,7 +959,7 @@ void main() {
               initialValue: DateTime(2026, 9, 1),
               firstDate: DateTime(2020),
               lastDate: DateTime(2030),
-              dayMode: DayMode.gregorian,
+              calendarMode: CalendarMode.gregorian,
             );
           },
         ),
@@ -969,7 +989,7 @@ void main() {
               initialValue: range,
               firstDate: DateTime(2020),
               lastDate: DateTime(2030),
-              dayMode: DayMode.gregorian,
+              calendarMode: CalendarMode.gregorian,
             );
           },
         ),
@@ -1010,14 +1030,14 @@ void main() {
     });
 
     group('default range text', () {
-      Future<String> rangeText(WidgetTester tester, DateTimeRange range, DayMode dayMode) async {
+      Future<String> rangeText(WidgetTester tester, DateTimeRange range, CalendarMode calendarMode) async {
         await pumpField(
           tester,
           HebrewDateRangeFormField(
             initialValue: range,
             firstDate: DateTime(2020),
             lastDate: DateTime(2030),
-            dayMode: dayMode,
+            calendarMode: calendarMode,
           ),
         );
         return tester.widget<TextField>(find.byType(TextField)).controller!.text;
@@ -1027,7 +1047,7 @@ void main() {
         // 1-9 Tishrei 5787.
         final range = DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 9, 20));
         expect(
-          await rangeText(tester, range, DayMode.both),
+          await rangeText(tester, range, CalendarMode.both),
           'Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז',
         );
       });
@@ -1035,7 +1055,7 @@ void main() {
       testWidgets('writes a shared Hebrew year once', (tester) async {
         // 1 Tishrei - 1 Cheshvan 5787.
         final range = DateTimeRange(start: DateTime(2026, 9, 12), end: DateTime(2026, 10, 12));
-        final text = await rangeText(tester, range, DayMode.hebrew);
+        final text = await rangeText(tester, range, CalendarMode.hebrew);
         expect(text, startsWith('א׳ תשרי – '));
         expect(text, endsWith('תשפ״ז'));
         expect('תשפ״ז'.allMatches(text), hasLength(1));
@@ -1047,7 +1067,7 @@ void main() {
           await rangeText(
             tester,
             DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 20)),
-            DayMode.hebrew,
+            CalendarMode.hebrew,
           ),
           '${DateTime(2026, 9, 1).getHebrewDateFormatted()} – '
           '${DateTime(2026, 9, 20).getHebrewDateFormatted()}',
@@ -1056,7 +1076,7 @@ void main() {
           await rangeText(
             tester,
             DateTimeRange(start: DateTime(2026, 12, 30), end: DateTime(2027, 1, 2)),
-            DayMode.gregorian,
+            CalendarMode.gregorian,
           ),
           'Dec 30, 2026 – Jan 2, 2027',
         );
@@ -1065,7 +1085,7 @@ void main() {
       testWidgets('writes a one-day range as a single date', (tester) async {
         final day = DateTime(2026, 9, 12);
         expect(
-          await rangeText(tester, DateTimeRange(start: day, end: day), DayMode.both),
+          await rangeText(tester, DateTimeRange(start: day, end: day), CalendarMode.both),
           'Sep 12, 2026 · ${day.getHebrewDateFormatted()}',
         );
       });

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
-import 'day_mode.dart';
+import 'calendar_mode.dart';
 import 'hebrew_date_extension.dart';
 import 'hebrew_date_picker.dart';
 
@@ -19,7 +19,7 @@ typedef HebrewDateFieldFormatter = String Function(BuildContext context, DateTim
 /// instead (without calling [onChanged]), so it can follow a date kept outside of it. Store the
 /// picked date from [onChanged] and pass it back as `initialValue` to keep both in sync.
 ///
-/// By default the text follows [dayMode]: the Gregorian date, the Hebrew date or both. Pass
+/// By default the text follows [calendarMode]: the Gregorian date, the Hebrew date or both. Pass
 /// [dateFormatter] to show something else.
 class HebrewDateFormField extends FormField<DateTime> {
   HebrewDateFormField({
@@ -39,7 +39,8 @@ class HebrewDateFormField extends FormField<DateTime> {
     this.focusNode,
     this.dateFormatter,
     this.selectableDayPredicate,
-    this.dayMode = DayMode.both,
+    CalendarMode calendarMode = CalendarMode.both,
+    @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
     this.locale,
@@ -49,7 +50,8 @@ class HebrewDateFormField extends FormField<DateTime> {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  }) : super(
+  })  : calendarMode = dayMode ?? calendarMode,
+        super(
           initialValue: initialValue == null ? null : _dateOnly(initialValue),
           builder: (field) => (field as _HebrewDateFormFieldState)._buildTextField(),
         );
@@ -78,14 +80,18 @@ class HebrewDateFormField extends FormField<DateTime> {
   /// The focus node of the text field.
   final FocusNode? focusNode;
 
-  /// Formats the date shown in the field. Defaults to a format that follows [dayMode].
+  /// Formats the date shown in the field. Defaults to a format that follows [calendarMode].
   final HebrewDateFieldFormatter? dateFormatter;
 
   /// See [HebrewDatePicker.selectableDayPredicate].
   final SelectableDayPredicate? selectableDayPredicate;
 
-  /// What each day cell of the picker shows. Also picks the default format of the text.
-  final DayMode dayMode;
+  /// Which calendar the picker shows. Also picks the default format of the text.
+  final CalendarMode calendarMode;
+
+  /// The old name of [calendarMode].
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.')
+  CalendarMode get dayMode => calendarMode;
 
   /// See [HebrewDatePicker.initialDatePickerMode].
   final DatePickerMode initialDatePickerMode;
@@ -136,7 +142,7 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
 
   @override
   String _format(DateTime value) =>
-      (widget.dateFormatter ?? _defaultFormatter(widget.dayMode))(context, value);
+      (widget.dateFormatter ?? _defaultFormatter(widget.calendarMode))(context, value);
 
   @override
   Future<DateTime?> _pick() {
@@ -149,7 +155,7 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
       firstDate: widget.firstDate,
       lastDate: widget.lastDate,
       selectableDayPredicate: predicate,
-      dayMode: widget.dayMode,
+      calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
       locale: widget.locale,
@@ -175,7 +181,7 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
 /// When the parent rebuilds it with a different `initialValue`, the field shows that range
 /// instead (without calling [onChanged]), so it can follow a range kept outside of it.
 ///
-/// By default the text follows [dayMode] and writes what both ends share once, so it fits in
+/// By default the text follows [calendarMode] and writes what both ends share once, so it fits in
 /// one field: "Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז". Pass [dateFormatter] to format each
 /// end yourself instead.
 class HebrewDateRangeFormField extends FormField<DateTimeRange> {
@@ -196,7 +202,8 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     this.focusNode,
     this.dateFormatter,
     this.selectableDayPredicate,
-    this.dayMode = DayMode.both,
+    CalendarMode calendarMode = CalendarMode.both,
+    @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
     this.locale,
@@ -206,7 +213,8 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  }) : super(
+  })  : calendarMode = dayMode ?? calendarMode,
+        super(
           initialValue: initialValue == null
               ? null
               : DateTimeRange(
@@ -241,14 +249,18 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
   final FocusNode? focusNode;
 
   /// Formats each end of the range shown in the field. Defaults to a format that follows
-  /// [dayMode].
+  /// [calendarMode].
   final HebrewDateFieldFormatter? dateFormatter;
 
   /// See [HebrewDateRangePicker.selectableDayPredicate].
   final SelectableDayPredicate? selectableDayPredicate;
 
-  /// What each day cell of the picker shows. Also picks the default format of the text.
-  final DayMode dayMode;
+  /// Which calendar the picker shows. Also picks the default format of the text.
+  final CalendarMode calendarMode;
+
+  /// The old name of [calendarMode].
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.')
+  CalendarMode get dayMode => calendarMode;
 
   /// See [HebrewDateRangePicker.initialDatePickerMode].
   final DatePickerMode initialDatePickerMode;
@@ -300,7 +312,7 @@ class _HebrewDateRangeFormFieldState extends _PickerFormFieldState<DateTimeRange
   @override
   String _format(DateTimeRange value) {
     final format = widget.dateFormatter;
-    if (format == null) return _defaultRangeText(context, value, widget.dayMode);
+    if (format == null) return _defaultRangeText(context, value, widget.calendarMode);
     return '${format(context, value.start)} – ${format(context, value.end)}';
   }
 
@@ -312,7 +324,7 @@ class _HebrewDateRangeFormFieldState extends _PickerFormFieldState<DateTimeRange
       firstDate: widget.firstDate,
       lastDate: widget.lastDate,
       selectableDayPredicate: widget.selectableDayPredicate,
-      dayMode: widget.dayMode,
+      calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
       locale: widget.locale,
@@ -431,13 +443,13 @@ DateTime? _initialPickerDate(
   return null;
 }
 
-HebrewDateFieldFormatter _defaultFormatter(DayMode dayMode) {
+HebrewDateFieldFormatter _defaultFormatter(CalendarMode calendarMode) {
   return (context, date) {
     final gregorian = MaterialLocalizations.of(context).formatShortDate(date);
-    return switch (dayMode) {
-      DayMode.both => '$gregorian · ${date.getHebrewDateFormatted()}',
-      DayMode.hebrew => date.getHebrewDateFormatted(),
-      DayMode.gregorian => gregorian,
+    return switch (calendarMode) {
+      CalendarMode.both => '$gregorian · ${date.getHebrewDateFormatted()}',
+      CalendarMode.hebrew => date.getHebrewDateFormatted(),
+      CalendarMode.gregorian => gregorian,
     };
   };
 }
@@ -446,7 +458,7 @@ final HebrewDateFormatter _hebrewFormatter = HebrewDateFormatter()..hebrewFormat
 
 /// The default range text. The ends share what they have in common, so both calendars fit in
 /// one field: "Sep 12 – Sep 20, 2026 · א׳–ט׳ תשרי תשפ״ז".
-String _defaultRangeText(BuildContext context, DateTimeRange range, DayMode dayMode) {
+String _defaultRangeText(BuildContext context, DateTimeRange range, CalendarMode calendarMode) {
   final start = range.start;
   final end = range.end;
   final localizations = MaterialLocalizations.of(context);
@@ -476,9 +488,9 @@ String _defaultRangeText(BuildContext context, DateTimeRange range, DayMode dayM
         '${end.getHebrewDayOfMonth()} $endMonth $year';
   }
 
-  return switch (dayMode) {
-    DayMode.both => '${gregorian()} · ${hebrew()}',
-    DayMode.hebrew => hebrew(),
-    DayMode.gregorian => gregorian(),
+  return switch (calendarMode) {
+    CalendarMode.both => '${gregorian()} · ${hebrew()}',
+    CalendarMode.hebrew => hebrew(),
+    CalendarMode.gregorian => gregorian(),
   };
 }

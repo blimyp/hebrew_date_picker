@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import 'day_mode.dart';
+import 'calendar_mode.dart';
 import 'hebrew_date_extension.dart';
 import 'hebrew_month.dart';
 
@@ -16,7 +16,8 @@ Future<DateTime?> showHebrewDatePicker({
   required DateTime firstDate,
   required DateTime lastDate,
   SelectableDayPredicate? selectableDayPredicate,
-  DayMode dayMode = DayMode.both,
+  CalendarMode calendarMode = CalendarMode.both,
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   bool showTodayButton = false,
   String? locale,
@@ -38,7 +39,7 @@ Future<DateTime?> showHebrewDatePicker({
       firstDate: firstDate,
       lastDate: lastDate,
       selectableDayPredicate: selectableDayPredicate,
-      dayMode: dayMode,
+      calendarMode: dayMode ?? calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
       locale: locale,
@@ -64,7 +65,8 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
   required DateTime firstDate,
   required DateTime lastDate,
   SelectableDayPredicate? selectableDayPredicate,
-  DayMode dayMode = DayMode.both,
+  CalendarMode calendarMode = CalendarMode.both,
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   bool showTodayButton = false,
   String? locale,
@@ -86,7 +88,7 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
       firstDate: firstDate,
       lastDate: lastDate,
       selectableDayPredicate: selectableDayPredicate,
-      dayMode: dayMode,
+      calendarMode: dayMode ?? calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
       locale: locale,
@@ -138,7 +140,8 @@ class HebrewDatePicker extends StatelessWidget {
     required this.onConfirm,
     this.onCancel,
     this.onDateChanged,
-    this.dayMode = DayMode.both,
+    CalendarMode calendarMode = CalendarMode.both,
+    @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
     this.locale,
@@ -148,7 +151,7 @@ class HebrewDatePicker extends StatelessWidget {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  });
+  }) : calendarMode = dayMode ?? calendarMode;
 
   final DateTime initialDate;
   final DateTime firstDate;
@@ -169,9 +172,13 @@ class HebrewDatePicker extends StatelessWidget {
 
   /// Which calendar the picker shows: both (the default), only the Hebrew one or only the
   /// Gregorian one. It decides the day cells, the header, the month title and the year grid.
-  /// With [DayMode.hebrew] the calendar also pages by Hebrew months, with Hebrew weekday
+  /// With [CalendarMode.hebrew] the calendar also pages by Hebrew months, with Hebrew weekday
   /// letters.
-  final DayMode dayMode;
+  final CalendarMode calendarMode;
+
+  /// The old name of [calendarMode].
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.')
+  CalendarMode get dayMode => calendarMode;
 
   /// Whether the picker opens on the month calendar (the default) or on the year grid.
   /// Tapping the month title switches between the two.
@@ -215,7 +222,7 @@ class HebrewDatePicker extends StatelessWidget {
       onConfirmDate: onConfirm,
       onCancel: onCancel,
       onDateChanged: onDateChanged,
-      dayMode: dayMode,
+      calendarMode: calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
       locale: locale,
@@ -246,7 +253,8 @@ class HebrewDateRangePicker extends StatelessWidget {
     required this.onConfirm,
     this.onCancel,
     this.onDateRangeChanged,
-    this.dayMode = DayMode.both,
+    CalendarMode calendarMode = CalendarMode.both,
+    @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
     this.locale,
@@ -256,7 +264,7 @@ class HebrewDateRangePicker extends StatelessWidget {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  });
+  }) : calendarMode = dayMode ?? calendarMode;
 
   /// The range selected when the picker opens. When null, no range is selected and the
   /// calendar opens on the current month.
@@ -281,9 +289,13 @@ class HebrewDateRangePicker extends StatelessWidget {
 
   /// Which calendar the picker shows: both (the default), only the Hebrew one or only the
   /// Gregorian one. It decides the day cells, the header, the month title and the year grid.
-  /// With [DayMode.hebrew] the calendar also pages by Hebrew months, with Hebrew weekday
+  /// With [CalendarMode.hebrew] the calendar also pages by Hebrew months, with Hebrew weekday
   /// letters.
-  final DayMode dayMode;
+  final CalendarMode calendarMode;
+
+  /// The old name of [calendarMode].
+  @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.')
+  CalendarMode get dayMode => calendarMode;
 
   /// Whether the picker opens on the month calendar (the default) or on the year grid.
   /// Tapping the month title switches between the two.
@@ -328,7 +340,7 @@ class HebrewDateRangePicker extends StatelessWidget {
       onConfirmRange: onConfirm,
       onCancel: onCancel,
       onDateRangeChanged: onDateRangeChanged,
-      dayMode: dayMode,
+      calendarMode: calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
       locale: locale,
@@ -356,7 +368,7 @@ class _CalendarPicker extends StatefulWidget {
     this.onCancel,
     this.onDateChanged,
     this.onDateRangeChanged,
-    required this.dayMode,
+    required this.calendarMode,
     required this.initialDatePickerMode,
     required this.showTodayButton,
     this.locale,
@@ -378,7 +390,7 @@ class _CalendarPicker extends StatefulWidget {
   final VoidCallback? onCancel;
   final ValueChanged<DateTime>? onDateChanged;
   final ValueChanged<DateTimeRange>? onDateRangeChanged;
-  final DayMode dayMode;
+  final CalendarMode calendarMode;
   final DatePickerMode initialDatePickerMode;
   final bool showTodayButton;
   final String? locale;
@@ -458,10 +470,10 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   int get _activeYear => _yearOf(widget.rangeSelection ? _focusedDay : _selectedDay);
 
   /// Whether the calendar pages by Hebrew months and the year grid lists Hebrew years.
-  bool get _hebrewMonths => widget.dayMode == DayMode.hebrew;
+  bool get _hebrewMonths => widget.calendarMode == CalendarMode.hebrew;
 
-  /// Whether the picker shows both calendars. Otherwise it shows only the one of [DayMode].
-  bool get _bothCalendars => widget.dayMode == DayMode.both;
+  /// Whether the picker shows both calendars. Otherwise it shows only the one of [CalendarMode].
+  bool get _bothCalendars => widget.calendarMode == CalendarMode.both;
 
   /// The year of [day] that the year grid lists: the Hebrew one when paging by Hebrew months.
   int _yearOf(DateTime day) => _hebrewMonths ? HebrewMonth.of(day).year : day.year;
@@ -512,7 +524,7 @@ class _CalendarPickerState extends State<_CalendarPicker> {
   }
 
   /// The header. [hebrewTitle], the line of Hebrew dates under the Gregorian [title], is shown
-  /// only with [DayMode.both].
+  /// only with [CalendarMode.both].
   Widget _header({required String helpText, required String title, String? hebrewTitle}) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
@@ -903,10 +915,10 @@ class _CalendarPickerState extends State<_CalendarPicker> {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: switch (widget.dayMode) {
-        DayMode.gregorian => Text('${day.day}', style: mainStyle),
-        DayMode.hebrew => Text(day.getHebrewDayOfMonth(), style: mainStyle),
-        DayMode.both => Column(
+      child: switch (widget.calendarMode) {
+        CalendarMode.gregorian => Text('${day.day}', style: mainStyle),
+        CalendarMode.hebrew => Text(day.getHebrewDayOfMonth(), style: mainStyle),
+        CalendarMode.both => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('${day.day}', style: mainStyle),

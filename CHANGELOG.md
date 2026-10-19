@@ -1,10 +1,12 @@
 ## Unreleased
 
 * **Breaking:** `dayMode` now decides which calendar the whole picker shows, not only the
-  day cells. With `DayMode.gregorian` the header, the month title and the year grid show no
-  Hebrew dates; with `DayMode.hebrew` they show no Gregorian dates. `DayMode.both` (the
-  default) is unchanged.
-* With `DayMode.hebrew` the calendar pages by Hebrew months instead of Gregorian ones: each
+  day cells. With `CalendarMode.gregorian` the header, the month title and the year grid show
+  no Hebrew dates; with `CalendarMode.hebrew` they show no Gregorian dates.
+  `CalendarMode.both` (the default) is unchanged.
+* Rename `dayMode` to `calendarMode` and `DayMode` to `CalendarMode`, to match what they do
+  now. The old names still work but are deprecated, and will be removed in 1.0.0.
+* With `CalendarMode.hebrew` the calendar pages by Hebrew months instead of Gregorian ones: each
   page is a whole Hebrew month, titled e.g. `תשרי תשפ״ז`, with Hebrew weekday letters, and
   the year grid lists Hebrew years. Selecting a year keeps the Hebrew day and month.
 
