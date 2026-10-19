@@ -56,15 +56,14 @@ class HebrewMonth {
 
   DateTime get lastDay => day(length);
 
+  /// The name of the month in Hebrew, e.g. "חשוון".
+  String get name => _hebrewFormatter.formatMonth(_date(1));
+
   /// The month and the year in Hebrew, e.g. "חשוון תשפ״ז".
-  String get title => '${_hebrewFormatter.formatMonth(_date(1))} ${formatYear(year)}';
+  String get title => '$name ${formatYear(year)}';
 
   /// The Hebrew [year] in letters, e.g. "תשפ״ז".
   static String formatYear(int year) => _hebrewFormatter.formatHebrewNumber(year);
-
-  /// The Gregorian years covered by the Hebrew [year], e.g. "2026–2027".
-  static String gregorianYearsOf(int year) =>
-      '${HebrewMonth.inYear(year, 7).firstDay.year}–${HebrewMonth.inYear(year, 6).lastDay.year}';
 
   static bool _isLeapYear(int year) => (7 * year + 1) % 19 < 7;
 

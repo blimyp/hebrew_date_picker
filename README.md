@@ -149,17 +149,19 @@ both ends share once, so both calendars fit in one field:
 | `todayText` | `MaterialLocalizations.currentDateLabel` |
 | `locale` | the `intl` default locale |
 
-`dayMode` controls what each day cell shows:
+`dayMode` controls which calendar the picker shows - both, or only one of them:
 
-| `DayMode` | Day cell |
-|---|---|
-| `both` | the Gregorian day with the Hebrew day below it (`12` / `א׳`) |
-| `hebrew` | only the Hebrew day (`א׳`) |
-| `gregorian` | only the Gregorian day (`12`) |
+| | `both` | `hebrew` | `gregorian` |
+|---|---|---|---|
+| Day cell | `12` / `א׳` | `א׳` | `12` |
+| Header | `Sat, Sep 12` / `א׳ תשרי תשפ״ז` | `א׳ תשרי תשפ״ז` | `Sat, Sep 12` |
+| Month title | `September 2026` / `אלול–תשרי תשפ״ז` | `תשרי תשפ״ז` | `September 2026` |
+| Pages by | Gregorian months | Hebrew months | Gregorian months |
+| Weekdays | from `locale` | `א ב ג ד ה ו ש` | from `locale` |
+| Year grid | `2026` / `תשפ״ו–תשפ״ז` | `תשפ״ז` | `2026` |
 
-With `DayMode.hebrew` the calendar also pages by Hebrew months: each page is a whole Hebrew
-month, the month title shows it (`תשרי תשפ״ז`) with the Gregorian months it covers below
-(`Sep – Oct 2026`), and the year grid lists Hebrew years (`תשפ״ז` / `2026–2027`).
+With `DayMode.hebrew` each page is a whole Hebrew month, and selecting a year keeps the
+Hebrew day and month.
 
 ```dart
 showHebrewDatePicker(

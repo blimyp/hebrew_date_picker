@@ -1,11 +1,12 @@
-/// What a day cell of the `HebrewDatePicker` shows.
+/// Which calendar the `HebrewDatePicker` shows.
 enum DayMode {
-  /// The Gregorian day with the Hebrew day below it, e.g. `12` / `א׳`.
+  /// Both calendars: the Gregorian day with the Hebrew day below it (`12` / `א׳`), and the
+  /// Hebrew dates under the Gregorian ones in the header, the month title and the year grid.
   both,
 
-  /// Only the Hebrew day, e.g. `א׳`.
+  /// Only the Hebrew calendar: the Hebrew day (`א׳`), Hebrew months and Hebrew years.
   hebrew,
 
-  /// Only the Gregorian day, e.g. `12`.
+  /// Only the Gregorian calendar: the Gregorian day (`12`), months and years.
   gregorian,
 }
