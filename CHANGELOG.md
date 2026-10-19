@@ -1,4 +1,4 @@
-## Unreleased
+## 0.4.0
 
 * **Breaking:** `dayMode` now decides which calendar the whole picker shows, not only the
   day cells. With `CalendarMode.gregorian` the header, the month title and the year grid show
