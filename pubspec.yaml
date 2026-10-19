@@ -14,6 +14,10 @@ screenshots:
     path: screenshots/hebrew_date_picker.png
   - description: "The date range picker, showing the Hebrew dates of the selected range."
     path: screenshots/hebrew_date_range_picker.png
+  - description: "The date picker with CalendarMode.hebrew, paging by Hebrew months."
+    path: screenshots/hebrew_calendar_mode.png
+  - description: "The form fields, showing the picked date and range in both calendars."
+    path: screenshots/hebrew_date_form_field.png
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

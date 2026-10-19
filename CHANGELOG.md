@@ -9,6 +9,8 @@
 * With `CalendarMode.hebrew` the calendar pages by Hebrew months instead of Gregorian ones: each
   page is a whole Hebrew month, titled e.g. `תשרי תשפ״ז`, with Hebrew weekday letters, and
   the year grid lists Hebrew years. Selecting a year keeps the Hebrew day and month.
+* Add screenshots of `CalendarMode.hebrew` and of the form fields, and refresh the date
+  picker's screenshot.
 
 ## 0.3.0
 

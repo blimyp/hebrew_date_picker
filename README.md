@@ -11,7 +11,7 @@ Gregorian one:
   (e.g. `1990` / `תש״נ–תשנ״א`), so far-away dates are a couple of taps away,
 * a range picker selects a start and an end date, with the Hebrew dates of both in the header.
 
-<img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="360"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_range_picker.png" alt="Hebrew date range picker" width="360">
+<img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_range_picker.png" alt="Hebrew date range picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_calendar_mode.png" alt="Hebrew date picker with CalendarMode.hebrew" width="260">
 
 Hebrew dates are calculated with [kosher_dart](https://pub.dev/packages/kosher_dart) and the
 calendar grid is built on [table_calendar](https://pub.dev/packages/table_calendar).
@@ -81,6 +81,8 @@ customization parameters as `HebrewDatePicker`; `helpText` defaults to
 `HebrewDateFormField` is a read-only text field that opens the picker when tapped and shows
 the picked date, so you don't have to build one yourself. It is a `FormField`, so it works
 inside a `Form` with `validator` and `onSaved`, and on its own with `onChanged`:
+
+<img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_form_field.png" alt="Hebrew date form fields" width="480">
 
 ```dart
 HebrewDateFormField(
