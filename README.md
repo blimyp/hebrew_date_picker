@@ -11,6 +11,8 @@ Gregorian one:
   (e.g. `1990` / `תש״נ–תשנ״א`), so far-away dates are a couple of taps away,
 * a range picker selects a start and an end date, with the Hebrew dates of both in the header.
 
+**[▶ Try the live demo](https://blimyp.github.io/hebrew_date_picker/)** — no installation needed.
+
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_range_picker.png" alt="Hebrew date range picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_calendar_mode.png" alt="Hebrew date picker with CalendarMode.hebrew" width="260">
 
 Hebrew dates are calculated with [kosher_dart](https://pub.dev/packages/kosher_dart) and the
