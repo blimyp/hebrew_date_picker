@@ -10,6 +10,14 @@ extension HebrewDateExtension on DateTime {
     return _hebrewFormatter.format(_jewishDate);
   }
 
+  /// Whether this day is a Yom Tov as kept in Israel: Rosh Hashana, Yom Kippur, the first day
+  /// of Sukkot, Shemini Atzeres, the first and last days of Pesach, or Shavuos.
+  /// Chol Hamoed, Chanukah, Purim, fasts and modern holidays are not.
+  bool isYomTov() {
+    final calendar = JewishCalendar.fromDateTime(DateTime(year, month, day))..inIsrael = true;
+    return calendar.isYomTovAssurBemelacha();
+  }
+
   /// The Hebrew day of month in letters, e.g. "כ״ו".
   String getHebrewDayOfMonth() {
     return _hebrewFormatter.formatHebrewNumber(_jewishDate.getJewishDayOfMonth());

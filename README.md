@@ -144,6 +144,7 @@ both ends share once, so both calendars fit in one field:
 | `calendarMode` | `CalendarMode.both` |
 | `selectableDayPredicate` | every day is selectable |
 | `showTodayButton` | `false` |
+| `holidayDecoration` | `null` (no days are marked) |
 | `initialDatePickerMode` | `DatePickerMode.day` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
@@ -209,6 +210,24 @@ showHebrewDatePicker(
 today's month and selects today (in the range picker, as the start of a new range). It is
 disabled when today is outside `firstDate`–`lastDate` or isn't selectable.
 
+`holidayDecoration` marks the Yamim Tovim: Rosh Hashana, Yom Kippur, the first day of Sukkot,
+Shemini Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel. Chol
+Hamoed, Chanukah, Purim, fasts and modern holidays are not marked. It takes any `Decoration`,
+painted behind the day, so a selected day's circle covers it. For example, an orange ring:
+
+```dart
+showHebrewDatePicker(
+  context: context,
+  initialDate: DateTime(2026, 9, 1),
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  holidayDecoration: BoxDecoration(
+    shape: BoxShape.circle,
+    border: Border.all(color: Colors.orange, width: 2),
+  ),
+);
+```
+
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to
 your app or calling `initializeDateFormatting()` from `package:intl/date_symbol_data_local.dart`.
@@ -222,6 +241,7 @@ DateTime(2026, 9, 12).getHebrewDateFormatted(); // א׳ תשרי תשפ״ז
 DateTime(2026, 9, 12).getHebrewDayOfMonth();    // א׳
 DateTime(2026, 9, 1).getHebrewMonthsOfMonth();  // אלול–תשרי תשפ״ז
 DateTime(1990).getHebrewYearsOfYear();          // תש״נ–תשנ״א
+DateTime(2026, 9, 21).isYomTov();               // true (Yom Kippur)
 ```
 
 ## Example

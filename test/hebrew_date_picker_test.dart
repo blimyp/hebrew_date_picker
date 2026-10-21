@@ -28,6 +28,104 @@ void main() {
     test('lists the Hebrew years covered by a Gregorian year', () {
       expect(DateTime(1990).getHebrewYearsOfYear(), 'תש״נ–תשנ״א');
     });
+
+    test('isYomTov is true on the Yamim Tovim as kept in Israel', () {
+      final yamimTovim = [
+        DateTime(2026, 9, 12), // Rosh Hashana, day 1
+        DateTime(2026, 9, 13), // Rosh Hashana, day 2
+        DateTime(2026, 9, 21), // Yom Kippur
+        DateTime(2026, 9, 26), // Sukkot
+        DateTime(2026, 10, 3), // Shemini Atzeres
+        DateTime(2026, 4, 2), // Pesach, first day
+        DateTime(2026, 4, 8), // Pesach, seventh day
+        DateTime(2026, 5, 22), // Shavuos
+      ];
+      for (final day in yamimTovim) {
+        expect(day.isYomTov(), isTrue, reason: '$day');
+      }
+    });
+
+    test('isYomTov is false on other days', () {
+      final otherDays = [
+        DateTime(2026, 9, 11), // Erev Rosh Hashana
+        DateTime(2026, 9, 28), // Chol Hamoed Sukkot
+        DateTime(2026, 10, 2), // Hoshana Rabba
+        DateTime(2026, 4, 9), // Second day of the last day of Pesach, kept outside Israel
+        DateTime(2026, 5, 23), // Second day of Shavuos, kept outside Israel
+        DateTime(2026, 3, 3), // Purim
+        DateTime(2026, 4, 22), // Yom Ha'atzmaut
+        DateTime(2026, 12, 5), // Chanukah
+        DateTime(2026, 9, 14), // A regular day
+      ];
+      for (final day in otherDays) {
+        expect(day.isYomTov(), isFalse, reason: '$day');
+      }
+    });
+  });
+
+  group('holidayDecoration', () {
+    const decoration = BoxDecoration(shape: BoxShape.circle, color: Colors.orange);
+    final holidayMark = find.byWidgetPredicate(
+      (widget) => widget is DecoratedBox && widget.decoration == decoration,
+    );
+
+    Future<void> pumpPicker(
+      WidgetTester tester, {
+      Decoration? holidayDecoration,
+      CalendarMode calendarMode = CalendarMode.both,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDatePicker(
+                initialDate: DateTime(2026, 9, 14),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                calendarMode: calendarMode,
+                holidayDecoration: holidayDecoration,
+                onConfirm: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('marks no days by default', (tester) async {
+      await pumpPicker(tester);
+      expect(find.byKey(const ValueKey('holiday-decoration')), findsNothing);
+    });
+
+    testWidgets('marks the Yamim Tovim of the Gregorian month', (tester) async {
+      await pumpPicker(tester, holidayDecoration: decoration);
+      // Rosh Hashana (two days), Yom Kippur and Sukkot.
+      expect(holidayMark, findsNWidgets(4));
+    });
+
+    testWidgets('marks the Yamim Tovim of the Hebrew month', (tester) async {
+      await pumpPicker(tester, holidayDecoration: decoration, calendarMode: CalendarMode.hebrew);
+      // Tishrei: Rosh Hashana (two days), Yom Kippur, Sukkot and Shemini Atzeres.
+      expect(holidayMark, findsNWidgets(5));
+    });
+
+    testWidgets('the form field passes it to the picker', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HebrewDateFormField(
+              initialValue: DateTime(2026, 9, 14),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              holidayDecoration: decoration,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(HebrewDateFormField));
+      await tester.pumpAndSettle();
+      expect(holidayMark, findsNWidgets(4));
+    });
   });
 
   group('Year picker', () {

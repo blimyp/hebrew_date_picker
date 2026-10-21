@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:hebrew_date_picker/hebrew_date_picker.dart';
 
@@ -29,8 +31,11 @@ class _ExamplePageState extends State<ExamplePage> {
   CalendarMode _calendarMode = CalendarMode.both;
   bool _disableSaturdays = false;
   bool _showTodayButton = false;
+  _HolidayStyle _holidayStyle = _HolidayStyle.none;
 
   bool _isSelectable(DateTime day) => !_disableSaturdays || day.weekday != DateTime.saturday;
+
+  Decoration? get _holidayDecoration => _holidayStyle.decoration(Theme.of(context).colorScheme);
 
   Future<void> _pickDate() async {
     final picked = await showHebrewDatePicker(
@@ -41,6 +46,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
+      holidayDecoration: _holidayDecoration,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _date = picked);
@@ -57,6 +63,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
+      holidayDecoration: _holidayDecoration,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _range = picked);
@@ -102,6 +109,17 @@ class _ExamplePageState extends State<ExamplePage> {
                   onChanged: (value) => setState(() => _showTodayButton = value),
                 ),
               ),
+              const SizedBox(height: 12),
+              Text('Holidays', style: textTheme.titleSmall),
+              const SizedBox(height: 8),
+              SegmentedButton<_HolidayStyle>(
+                segments: [
+                  for (final style in _HolidayStyle.values)
+                    ButtonSegment(value: style, label: Text(style.label)),
+                ],
+                selected: {_holidayStyle},
+                onSelectionChanged: (styles) => setState(() => _holidayStyle = styles.first),
+              ),
               const SizedBox(height: 40),
               FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
               const SizedBox(height: 12),
@@ -129,6 +147,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
+                  holidayDecoration: _holidayDecoration,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date field',
@@ -145,6 +164,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
+                  holidayDecoration: _holidayDecoration,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date range field',
@@ -158,5 +178,62 @@ class _ExamplePageState extends State<ExamplePage> {
         ),
       ),
     );
+  }
+}
+
+/// Ways to mark the holidays: `holidayDecoration` takes any [Decoration].
+enum _HolidayStyle {
+  none('None'),
+  border('Border'),
+  background('Background');
+
+  const _HolidayStyle(this.label);
+
+  final String label;
+
+  /// Colors from the theme, so the marks match the picker.
+  Decoration? decoration(ColorScheme colors) => switch (this) {
+        none => null,
+        border => _DashedCircleDecoration(color: colors.primary),
+        background => BoxDecoration(shape: BoxShape.circle, color: colors.secondaryContainer),
+      };
+}
+
+/// A dashed circle around the day, as an example of a custom [Decoration].
+class _DashedCircleDecoration extends Decoration {
+  const _DashedCircleDecoration({required this.color});
+
+  final Color color;
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) => _DashedCirclePainter(color);
+}
+
+class _DashedCirclePainter extends BoxPainter {
+  _DashedCirclePainter(this.color);
+
+  final Color color;
+
+  static const int _dashCount = 16;
+  static const double _strokeWidth = 1.5;
+
+  /// The share of each dash-and-gap step taken by the dash.
+  static const double _dashRatio = 0.6;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final Size size = configuration.size!;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth;
+    final rect = Rect.fromCircle(
+      center: offset + size.center(Offset.zero),
+      radius: (size.shortestSide - _strokeWidth) / 2,
+    );
+    const double step = 2 * math.pi / _dashCount;
+    for (int i = 0; i < _dashCount; i++) {
+      canvas.drawArc(rect, i * step, step * _dashRatio, false, paint);
+    }
   }
 }

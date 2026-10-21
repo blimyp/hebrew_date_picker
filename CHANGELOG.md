@@ -1,3 +1,11 @@
+## Unreleased
+
+* Add `holidayDecoration` to the pickers and the form fields. It marks the Yamim Tovim (Rosh
+  Hashana, Yom Kippur, the first day of Sukkot, Shemini Atzeres, the first and last days of
+  Pesach and Shavuos, as kept in Israel) with any `Decoration`, e.g. a colored ring. Defaults
+  to null, which marks no days.
+* Add `DateTime.isYomTov()`, e.g. to disable the Yamim Tovim with `selectableDayPredicate`.
+
 ## 0.4.0
 
 * **Breaking:** `dayMode` now decides which calendar the whole picker shows, not only the

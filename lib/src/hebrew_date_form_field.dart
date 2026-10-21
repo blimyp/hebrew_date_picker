@@ -43,6 +43,7 @@ class HebrewDateFormField extends FormField<DateTime> {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
+    this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -98,6 +99,9 @@ class HebrewDateFormField extends FormField<DateTime> {
 
   /// See [HebrewDatePicker.showTodayButton].
   final bool showTodayButton;
+
+  /// See [HebrewDatePicker.holidayDecoration].
+  final Decoration? holidayDecoration;
 
   /// See [HebrewDatePicker.locale].
   final String? locale;
@@ -158,6 +162,7 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
       calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
+      holidayDecoration: widget.holidayDecoration,
       locale: widget.locale,
       helpText: widget.helpText,
       cancelText: widget.cancelText,
@@ -206,6 +211,7 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
+    this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -268,6 +274,9 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
   /// See [HebrewDateRangePicker.showTodayButton].
   final bool showTodayButton;
 
+  /// See [HebrewDateRangePicker.holidayDecoration].
+  final Decoration? holidayDecoration;
+
   /// See [HebrewDateRangePicker.locale].
   final String? locale;
 
@@ -327,6 +336,7 @@ class _HebrewDateRangeFormFieldState extends _PickerFormFieldState<DateTimeRange
       calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
+      holidayDecoration: widget.holidayDecoration,
       locale: widget.locale,
       helpText: widget.helpText,
       cancelText: widget.cancelText,
