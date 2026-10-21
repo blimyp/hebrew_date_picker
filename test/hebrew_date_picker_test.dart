@@ -61,6 +61,12 @@ void main() {
         expect(day.isYomTov(), isFalse, reason: '$day');
       }
     });
+
+    test('getYomTovName names the Yom Tov in Hebrew', () {
+      expect(DateTime(2026, 9, 12).getYomTovName(), 'ראש השנה');
+      expect(DateTime(2026, 10, 3).getYomTovName(), 'שמיני עצרת');
+      expect(DateTime(2026, 9, 28).getYomTovName(), isNull); // Chol Hamoed Sukkot
+    });
   });
 
   group('holidayDecoration', () {
@@ -71,6 +77,7 @@ void main() {
 
     Future<void> pumpPicker(
       WidgetTester tester, {
+      DateTime? initialDate,
       Decoration? holidayDecoration,
       CalendarMode calendarMode = CalendarMode.both,
     }) {
@@ -79,7 +86,7 @@ void main() {
           home: Scaffold(
             body: SingleChildScrollView(
               child: HebrewDatePicker(
-                initialDate: DateTime(2026, 9, 14),
+                initialDate: initialDate ?? DateTime(2026, 9, 14),
                 firstDate: DateTime(2020),
                 lastDate: DateTime(2030),
                 calendarMode: calendarMode,
@@ -107,6 +114,29 @@ void main() {
       await pumpPicker(tester, holidayDecoration: decoration, calendarMode: CalendarMode.hebrew);
       // Tishrei: Rosh Hashana (two days), Yom Kippur, Sukkot and Shemini Atzeres.
       expect(holidayMark, findsNWidgets(5));
+    });
+
+    testWidgets('shows the name of a selected Yom Tov after the Hebrew date', (tester) async {
+      await pumpPicker(tester, holidayDecoration: decoration);
+      expect(find.textContaining('ראש השנה'), findsNothing);
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      expect(find.text('א׳ תשרי תשפ״ז · ראש השנה'), findsOneWidget);
+    });
+
+    testWidgets('shows the name on its own line with one calendar', (tester) async {
+      await pumpPicker(
+        tester,
+        initialDate: DateTime(2026, 9, 21),
+        holidayDecoration: decoration,
+        calendarMode: CalendarMode.gregorian,
+      );
+      expect(find.text('יום כיפור'), findsOneWidget);
+    });
+
+    testWidgets('shows no name without holidayDecoration', (tester) async {
+      await pumpPicker(tester, initialDate: DateTime(2026, 9, 12));
+      expect(find.textContaining('ראש השנה'), findsNothing);
     });
 
     testWidgets('the form field passes it to the picker', (tester) async {

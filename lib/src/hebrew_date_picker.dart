@@ -196,7 +196,8 @@ class HebrewDatePicker extends StatelessWidget {
   /// The decoration that marks the Yamim Tovim (Rosh Hashana, Yom Kippur, the first day of
   /// Sukkot, Shemini Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel),
   /// e.g. a [BoxDecoration] with a colored border. It is painted behind the day, so a selected
-  /// day's circle covers it. Defaults to null, which marks no days.
+  /// day's circle covers it. When it is set, the header also shows the name of a selected Yom
+  /// Tov, e.g. "ראש השנה". Defaults to null, which marks no days.
   final Decoration? holidayDecoration;
 
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
@@ -545,9 +546,13 @@ class _CalendarPickerState extends State<_CalendarPicker> {
     );
   }
 
-  /// The header. [hebrewTitle], the line of Hebrew dates under the Gregorian [title], is shown
-  /// only with [CalendarMode.both].
-  Widget _header({required String helpText, required String title, String? hebrewTitle}) {
+  /// The header. [subtitle], the line under [title], is shown only when [showSubtitle] is true.
+  Widget _header({
+    required String helpText,
+    required String title,
+    String? subtitle,
+    required bool showSubtitle,
+  }) {
     final textTheme = Theme.of(context).textTheme;
     return Container(
       color: _primaryColor,
@@ -559,10 +564,10 @@ class _CalendarPickerState extends State<_CalendarPicker> {
           Text(helpText, style: textTheme.labelMedium?.copyWith(color: _onPrimaryColor)),
           const SizedBox(height: 16),
           Text(title, style: textTheme.headlineSmall?.copyWith(color: _onPrimaryColor)),
-          if (_bothCalendars)
-            // Keeps the header height while the Hebrew line is empty.
+          if (showSubtitle)
+            // Keeps the header height while the line is empty.
             Text(
-              hebrewTitle ?? '',
+              subtitle ?? '',
               style: textTheme.bodyMedium?.copyWith(color: _onPrimaryColor),
             ),
         ],
@@ -572,12 +577,20 @@ class _CalendarPickerState extends State<_CalendarPicker> {
 
   Widget _selectedDateHeader() {
     final localizations = MaterialLocalizations.of(context);
+    final bool showHolidays = widget.holidayDecoration != null;
+    final String? holidayName = showHolidays ? _selectedDay.getYomTovName() : null;
     return _header(
       helpText: widget.helpText ?? localizations.datePickerHelpText,
       title: _hebrewMonths
           ? _selectedDay.getHebrewDateFormatted()
           : localizations.formatMediumDate(_selectedLocalDate),
-      hebrewTitle: _selectedDay.getHebrewDateFormatted(),
+      // The holiday's name follows the Hebrew date, or has the line to itself when the Hebrew
+      // date isn't shown there.
+      subtitle: [
+        if (_bothCalendars) _selectedDay.getHebrewDateFormatted(),
+        if (holidayName != null) holidayName,
+      ].join(' · '),
+      showSubtitle: _bothCalendars || showHolidays,
     );
   }
 
@@ -604,11 +617,12 @@ class _CalendarPickerState extends State<_CalendarPicker> {
       helpText: widget.helpText ?? localizations.dateRangePickerHelpText,
       title: '${start == null ? localizations.dateRangeStartLabel : format(start)} – '
           '${end == null ? localizations.dateRangeEndLabel : format(end)}',
-      hebrewTitle: start == null
+      subtitle: start == null
           ? null
           : end == null
               ? start.getHebrewDateFormatted()
               : '${start.getHebrewDateFormatted()} – ${end.getHebrewDateFormatted()}',
+      showSubtitle: _bothCalendars,
     );
   }
 

@@ -4,7 +4,10 @@
   Hashana, Yom Kippur, the first day of Sukkot, Shemini Atzeres, the first and last days of
   Pesach and Shavuos, as kept in Israel) with any `Decoration`, e.g. a colored ring. Defaults
   to null, which marks no days.
+* With `holidayDecoration`, the date picker's header shows the name of a selected Yom Tov,
+  e.g. `א׳ תשרי תשפ״ז · ראש השנה`.
 * Add `DateTime.isYomTov()`, e.g. to disable the Yamim Tovim with `selectableDayPredicate`.
+* Add `DateTime.getYomTovName()`, e.g. `ראש השנה`.
 * Add a screenshot of `holidayDecoration`.
 
 ## 0.4.0

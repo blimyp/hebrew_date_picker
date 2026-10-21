@@ -18,7 +18,7 @@ screenshots:
     path: screenshots/hebrew_calendar_mode.png
   - description: "The form fields, showing the picked date and range in both calendars."
     path: screenshots/hebrew_date_form_field.png
-  - description: "The date picker marking the Yamim Tovim (Rosh Hashana, Yom Kippur and Sukkot) with dashed circles, using holidayDecoration."
+  - description: "The date picker marking the Yamim Tovim (Rosh Hashana, Yom Kippur and Sukkot) with dashed circles and naming the selected one in the header."
     path: screenshots/hebrew_holidays.png
 
 environment:

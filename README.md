@@ -213,7 +213,8 @@ disabled when today is outside `firstDate`–`lastDate` or isn't selectable.
 `holidayDecoration` marks the Yamim Tovim: Rosh Hashana, Yom Kippur, the first day of Sukkot,
 Shemini Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel. Chol
 Hamoed, Chanukah, Purim, fasts and modern holidays are not marked. It takes any `Decoration`,
-painted behind the day, so a selected day's circle covers it. For example, an orange ring:
+painted behind the day, so a selected day's circle covers it. When a Yom Tov is selected, the
+date picker's header shows its name after the Hebrew date. For example, an orange ring:
 
 ```dart
 showHebrewDatePicker(
@@ -228,8 +229,9 @@ showHebrewDatePicker(
 );
 ```
 
-Here the dashed circles mark Rosh Hashana (12–13), Yom Kippur (21) and Sukkot (26). The
-example app draws them with a custom `Decoration`:
+Here the dashed circles mark Rosh Hashana (12–13), Yom Kippur (21) and Sukkot (26), and the
+header names the selected day, Rosh Hashana. The example app draws the circles with a custom
+`Decoration`:
 
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_holidays.png" alt="Hebrew date picker marking the Yamim Tovim with a dashed circle" width="260">
 
@@ -247,6 +249,7 @@ DateTime(2026, 9, 12).getHebrewDayOfMonth();    // א׳
 DateTime(2026, 9, 1).getHebrewMonthsOfMonth();  // אלול–תשרי תשפ״ז
 DateTime(1990).getHebrewYearsOfYear();          // תש״נ–תשנ״א
 DateTime(2026, 9, 21).isYomTov();               // true (Yom Kippur)
+DateTime(2026, 9, 21).getYomTovName();          // יום כיפור
 ```
 
 ## Example
