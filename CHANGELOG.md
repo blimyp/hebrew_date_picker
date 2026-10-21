@@ -5,6 +5,7 @@
   Pesach and Shavuos, as kept in Israel) with any `Decoration`, e.g. a colored ring. Defaults
   to null, which marks no days.
 * Add `DateTime.isYomTov()`, e.g. to disable the Yamim Tovim with `selectableDayPredicate`.
+* Add a screenshot of `holidayDecoration`.
 
 ## 0.4.0
 

@@ -228,6 +228,11 @@ showHebrewDatePicker(
 );
 ```
 
+Here the dashed circles mark Rosh Hashana (12–13), Yom Kippur (21) and Sukkot (26). The
+example app draws them with a custom `Decoration`:
+
+<img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_holidays.png" alt="Hebrew date picker marking the Yamim Tovim with a dashed circle" width="260">
+
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to
 your app or calling `initializeDateFormatting()` from `package:intl/date_symbol_data_local.dart`.

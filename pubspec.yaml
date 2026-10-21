@@ -18,6 +18,8 @@ screenshots:
     path: screenshots/hebrew_calendar_mode.png
   - description: "The form fields, showing the picked date and range in both calendars."
     path: screenshots/hebrew_date_form_field.png
+  - description: "The date picker marking the Yamim Tovim (Rosh Hashana, Yom Kippur and Sukkot) with dashed circles, using holidayDecoration."
+    path: screenshots/hebrew_holidays.png
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
