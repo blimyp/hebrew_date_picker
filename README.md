@@ -12,6 +12,7 @@ Gregorian one:
 * a range picker selects a start and an end date, with the Hebrew dates of both in the header.
 
 **[▶ Try the live demo](https://blimyp.github.io/hebrew_date_picker/)** — no installation needed.
+Read more in the [introduction post on DEV](https://dev.to/blimyp/a-hebrew-gregorian-date-picker-for-flutter-4a4b).
 
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_picker.png" alt="Hebrew date picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_date_range_picker.png" alt="Hebrew date range picker" width="260"> <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_calendar_mode.png" alt="Hebrew date picker with CalendarMode.hebrew" width="260">
 
