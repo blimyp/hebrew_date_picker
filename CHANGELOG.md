@@ -1,4 +1,4 @@
-## Unreleased
+## 0.5.0
 
 * Add `holidayDecoration` to the pickers and the form fields. It marks the Yamim Tovim (Rosh
   Hashana, Yom Kippur, the first day of Sukkot, Shemini Atzeres, the first and last days of
