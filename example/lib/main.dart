@@ -32,10 +32,15 @@ class _ExamplePageState extends State<ExamplePage> {
   bool _disableSaturdays = false;
   bool _showTodayButton = false;
   _HolidayStyle _holidayStyle = _HolidayStyle.none;
+  bool _outsideIsrael = false;
 
   bool _isSelectable(DateTime day) => !_disableSaturdays || day.weekday != DateTime.saturday;
 
-  Decoration? get _holidayDecoration => _holidayStyle.decoration(Theme.of(context).colorScheme);
+  HebrewHolidays? get _holidays {
+    final decoration = _holidayStyle.decoration(Theme.of(context).colorScheme);
+    if (decoration == null) return null;
+    return HebrewHolidays(decoration: decoration, inIsrael: !_outsideIsrael);
+  }
 
   Future<void> _pickDate() async {
     final picked = await showHebrewDatePicker(
@@ -46,7 +51,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      holidayDecoration: _holidayDecoration,
+      holidays: _holidays,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _date = picked);
@@ -63,7 +68,7 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      holidayDecoration: _holidayDecoration,
+      holidays: _holidays,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _range = picked);
@@ -120,7 +125,17 @@ class _ExamplePageState extends State<ExamplePage> {
                 selected: {_holidayStyle},
                 onSelectionChanged: (styles) => setState(() => _holidayStyle = styles.first),
               ),
-              const SizedBox(height: 40),
+              SizedBox(
+                width: 280,
+                child: SwitchListTile(
+                  title: const Text('Outside Israel'),
+                  value: _outsideIsrael,
+                  onChanged: _holidayStyle == _HolidayStyle.none
+                      ? null
+                      : (value) => setState(() => _outsideIsrael = value),
+                ),
+              ),
+              const SizedBox(height: 28),
               FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
               const SizedBox(height: 12),
               Text(localizations.formatFullDate(_date), style: textTheme.titleMedium),
@@ -147,7 +162,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  holidayDecoration: _holidayDecoration,
+                  holidays: _holidays,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date field',
@@ -164,7 +179,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  holidayDecoration: _holidayDecoration,
+                  holidays: _holidays,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date range field',
@@ -181,7 +196,7 @@ class _ExamplePageState extends State<ExamplePage> {
   }
 }
 
-/// Ways to mark the holidays: `holidayDecoration` takes any [Decoration].
+/// Ways to mark the holidays: `HebrewHolidays.decoration` takes any [Decoration].
 enum _HolidayStyle {
   none('None'),
   border('Border'),

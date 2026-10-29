@@ -5,3 +5,4 @@ export 'src/calendar_mode.dart';
 export 'src/hebrew_date_extension.dart';
 export 'src/hebrew_date_form_field.dart';
 export 'src/hebrew_date_picker.dart';
+export 'src/hebrew_holidays.dart';

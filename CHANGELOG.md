@@ -1,3 +1,16 @@
+## Unreleased
+
+* Add `holidays` to the pickers and the form fields, which takes a `HebrewHolidays`: the
+  `decoration` that marks the Yamim Tovim, and `inIsrael`. With `inIsrael: false` the Yamim
+  Tovim are marked and named as kept outside Israel, with the second days of Sukkot, Pesach
+  and Shavuos, the eighth day of Pesach, and Simchas Torah. `inIsrael` defaults to true.
+* Deprecate `holidayDecoration`, which still marks the Yamim Tovim of Israel. Use
+  `holidays: HebrewHolidays(decoration: ...)` instead. It will be removed in 1.0.0, and can't
+  be set together with `holidays`.
+* Add `inIsrael` to `DateTime.isYomTov()` and `DateTime.getYomTovName()`, e.g.
+  `DateTime(2026, 10, 4).getYomTovName(inIsrael: false)` is `שמחת תורה`.
+* The example app can mark the Yamim Tovim as kept outside Israel.
+
 ## 0.5.0
 
 * Add `holidayDecoration` to the pickers and the form fields. It marks the Yamim Tovim (Rosh

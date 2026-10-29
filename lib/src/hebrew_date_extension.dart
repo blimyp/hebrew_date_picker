@@ -10,20 +10,21 @@ extension HebrewDateExtension on DateTime {
     return _hebrewFormatter.format(_jewishDate);
   }
 
-  /// Whether this day is a Yom Tov as kept in Israel: Rosh Hashana, Yom Kippur, the first day
-  /// of Sukkot, Shemini Atzeres, the first and last days of Pesach, or Shavuos.
-  /// Chol Hamoed, Chanukah, Purim, fasts and modern holidays are not.
-  bool isYomTov() => _israelCalendar.isYomTovAssurBemelacha();
+  /// Whether this day is a Yom Tov: Rosh Hashana, Yom Kippur, the first day of Sukkot, Shemini
+  /// Atzeres, the first and last days of Pesach, or Shavuos. With [inIsrael] false, as kept
+  /// outside Israel, also the second days of Sukkot, Pesach and Shavuos, the eighth day of
+  /// Pesach, and Simchas Torah. Chol Hamoed, Chanukah, Purim, fasts and modern holidays are not.
+  bool isYomTov({bool inIsrael = true}) => _calendar(inIsrael).isYomTovAssurBemelacha();
 
   /// The Hebrew name of the Yom Tov on this day, e.g. "ראש השנה", or null when [isYomTov] is
   /// false.
-  String? getYomTovName() {
-    final calendar = _israelCalendar;
+  String? getYomTovName({bool inIsrael = true}) {
+    final calendar = _calendar(inIsrael);
     return calendar.isYomTovAssurBemelacha() ? _hebrewFormatter.formatYomTov(calendar) : null;
   }
 
-  JewishCalendar get _israelCalendar =>
-      JewishCalendar.fromDateTime(DateTime(year, month, day))..inIsrael = true;
+  JewishCalendar _calendar(bool inIsrael) =>
+      JewishCalendar.fromDateTime(DateTime(year, month, day))..inIsrael = inIsrael;
 
   /// The Hebrew day of month in letters, e.g. "כ״ו".
   String getHebrewDayOfMonth() {

@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import 'calendar_mode.dart';
 import 'hebrew_date_extension.dart';
+import 'hebrew_holidays.dart';
 import 'hebrew_month.dart';
 
 /// Shows a Material-style dialog with a [HebrewDatePicker].
@@ -20,7 +21,8 @@ Future<DateTime?> showHebrewDatePicker({
   @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   bool showTodayButton = false,
-  Decoration? holidayDecoration,
+  HebrewHolidays? holidays,
+  @Deprecated('Use holidays instead. Will be removed in 1.0.0.') Decoration? holidayDecoration,
   String? locale,
   String? helpText,
   String? cancelText,
@@ -43,6 +45,8 @@ Future<DateTime?> showHebrewDatePicker({
       calendarMode: dayMode ?? calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
+      holidays: holidays,
+      // ignore: deprecated_member_use_from_same_package
       holidayDecoration: holidayDecoration,
       locale: locale,
       helpText: helpText,
@@ -71,7 +75,8 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
   @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
   DatePickerMode initialDatePickerMode = DatePickerMode.day,
   bool showTodayButton = false,
-  Decoration? holidayDecoration,
+  HebrewHolidays? holidays,
+  @Deprecated('Use holidays instead. Will be removed in 1.0.0.') Decoration? holidayDecoration,
   String? locale,
   String? helpText,
   String? cancelText,
@@ -94,6 +99,8 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
       calendarMode: dayMode ?? calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
+      holidays: holidays,
+      // ignore: deprecated_member_use_from_same_package
       holidayDecoration: holidayDecoration,
       locale: locale,
       helpText: helpText,
@@ -107,6 +114,13 @@ Future<DateTimeRange?> showHebrewDateRangePicker({
     ),
   );
 }
+
+const String _holidaysAndDecorationError =
+    'Pass either holidays or holidayDecoration, not both.';
+
+/// The holidays that the deprecated `holidayDecoration` marks: the Yamim Tovim of Israel.
+HebrewHolidays? _holidaysFromDecoration(Decoration? decoration) =>
+    decoration == null ? null : HebrewHolidays(decoration: decoration);
 
 Future<T?> _showPickerDialog<T>({
   required BuildContext context,
@@ -148,7 +162,8 @@ class HebrewDatePicker extends StatelessWidget {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
-    this.holidayDecoration,
+    this.holidays,
+    @Deprecated('Use holidays instead. Will be removed in 1.0.0.') this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -156,7 +171,8 @@ class HebrewDatePicker extends StatelessWidget {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  }) : calendarMode = dayMode ?? calendarMode;
+  })  : calendarMode = dayMode ?? calendarMode,
+        assert(holidays == null || holidayDecoration == null, _holidaysAndDecorationError);
 
   final DateTime initialDate;
   final DateTime firstDate;
@@ -193,11 +209,14 @@ class HebrewDatePicker extends StatelessWidget {
   /// is outside [firstDate]–[lastDate] or isn't selectable. Defaults to false.
   final bool showTodayButton;
 
-  /// The decoration that marks the Yamim Tovim (Rosh Hashana, Yom Kippur, the first day of
-  /// Sukkot, Shemini Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel),
-  /// e.g. a [BoxDecoration] with a colored border. It is painted behind the day, so a selected
-  /// day's circle covers it. When it is set, the header also shows the name of a selected Yom
-  /// Tov, e.g. "ראש השנה". Defaults to null, which marks no days.
+  /// Marks the Yamim Tovim, as kept in Israel or outside of it. When it is set, the header also
+  /// shows the name of a selected Yom Tov, e.g. "ראש השנה". Defaults to null, which marks no
+  /// days.
+  final HebrewHolidays? holidays;
+
+  /// The old way to mark the Yamim Tovim, as kept in Israel. The same as
+  /// `holidays: HebrewHolidays(decoration: holidayDecoration)`. Can't be set with [holidays].
+  @Deprecated('Use holidays instead. Will be removed in 1.0.0.')
   final Decoration? holidayDecoration;
 
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
@@ -237,7 +256,8 @@ class HebrewDatePicker extends StatelessWidget {
       calendarMode: calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
-      holidayDecoration: holidayDecoration,
+      // ignore: deprecated_member_use_from_same_package
+      holidays: holidays ?? _holidaysFromDecoration(holidayDecoration),
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
@@ -270,7 +290,8 @@ class HebrewDateRangePicker extends StatelessWidget {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
-    this.holidayDecoration,
+    this.holidays,
+    @Deprecated('Use holidays instead. Will be removed in 1.0.0.') this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -278,7 +299,8 @@ class HebrewDateRangePicker extends StatelessWidget {
     this.todayText,
     this.primaryColor,
     this.secondaryTextColor,
-  }) : calendarMode = dayMode ?? calendarMode;
+  })  : calendarMode = dayMode ?? calendarMode,
+        assert(holidays == null || holidayDecoration == null, _holidaysAndDecorationError);
 
   /// The range selected when the picker opens. When null, no range is selected and the
   /// calendar opens on the current month.
@@ -319,10 +341,13 @@ class HebrewDateRangePicker extends StatelessWidget {
   /// is outside [firstDate]–[lastDate] or isn't selectable. Defaults to false.
   final bool showTodayButton;
 
-  /// The decoration that marks the Yamim Tovim (Rosh Hashana, Yom Kippur, the first day of
-  /// Sukkot, Shemini Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel),
-  /// e.g. a [BoxDecoration] with a colored border. It is painted behind the day, so a selected
-  /// day's circle covers it. Defaults to null, which marks no days.
+  /// Marks the Yamim Tovim, as kept in Israel or outside of it. Defaults to null, which marks
+  /// no days.
+  final HebrewHolidays? holidays;
+
+  /// The old way to mark the Yamim Tovim, as kept in Israel. The same as
+  /// `holidays: HebrewHolidays(decoration: holidayDecoration)`. Can't be set with [holidays].
+  @Deprecated('Use holidays instead. Will be removed in 1.0.0.')
   final Decoration? holidayDecoration;
 
   /// Locale used for the Gregorian month title and weekday names, e.g. 'he' or 'en_US'.
@@ -363,7 +388,8 @@ class HebrewDateRangePicker extends StatelessWidget {
       calendarMode: calendarMode,
       initialDatePickerMode: initialDatePickerMode,
       showTodayButton: showTodayButton,
-      holidayDecoration: holidayDecoration,
+      // ignore: deprecated_member_use_from_same_package
+      holidays: holidays ?? _holidaysFromDecoration(holidayDecoration),
       locale: locale,
       helpText: helpText,
       cancelText: cancelText,
@@ -392,7 +418,7 @@ class _CalendarPicker extends StatefulWidget {
     required this.calendarMode,
     required this.initialDatePickerMode,
     required this.showTodayButton,
-    this.holidayDecoration,
+    this.holidays,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -415,7 +441,7 @@ class _CalendarPicker extends StatefulWidget {
   final CalendarMode calendarMode;
   final DatePickerMode initialDatePickerMode;
   final bool showTodayButton;
-  final Decoration? holidayDecoration;
+  final HebrewHolidays? holidays;
   final String? locale;
   final String? helpText;
   final String? cancelText;
@@ -577,8 +603,10 @@ class _CalendarPickerState extends State<_CalendarPicker> {
 
   Widget _selectedDateHeader() {
     final localizations = MaterialLocalizations.of(context);
-    final bool showHolidays = widget.holidayDecoration != null;
-    final String? holidayName = showHolidays ? _selectedDay.getYomTovName() : null;
+    final HebrewHolidays? holidays = widget.holidays;
+    final bool showHolidays = holidays != null;
+    final String? holidayName =
+        showHolidays ? _selectedDay.getYomTovName(inIsrael: holidays.inIsrael) : null;
     return _header(
       helpText: widget.helpText ?? localizations.datePickerHelpText,
       title: _hebrewMonths
@@ -967,11 +995,11 @@ class _CalendarPickerState extends State<_CalendarPicker> {
           ),
       },
     );
-    final Decoration? holidayDecoration = widget.holidayDecoration;
-    if (holidayDecoration == null || !day.isYomTov()) return cell;
+    final HebrewHolidays? holidays = widget.holidays;
+    if (holidays == null || !day.isYomTov(inIsrael: holidays.inIsrael)) return cell;
     return DecoratedBox(
       key: const ValueKey('holiday-decoration'),
-      decoration: holidayDecoration,
+      decoration: holidays.decoration,
       child: cell,
     );
   }
