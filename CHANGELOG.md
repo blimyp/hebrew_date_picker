@@ -1,15 +1,24 @@
 ## Unreleased
 
-* Add `holidays` to the pickers and the form fields, which takes a `HebrewHolidays`: the
-  `decoration` that marks the Yamim Tovim, and `inIsrael`. With `inIsrael: false` the Yamim
-  Tovim are marked and named as kept outside Israel, with the second days of Sukkot, Pesach
-  and Shavuos, the eighth day of Pesach, and Simchas Torah. `inIsrael` defaults to true.
-* Deprecate `holidayDecoration`, which still marks the Yamim Tovim of Israel. Use
-  `holidays: HebrewHolidays(decoration: ...)` instead. It will be removed in 1.0.0, and can't
-  be set together with `holidays`.
-* Add `inIsrael` to `DateTime.isYomTov()` and `DateTime.getYomTovName()`, e.g.
-  `DateTime(2026, 10, 4).getYomTovName(inIsrael: false)` is `שמחת תורה`.
-* The example app can mark the Yamim Tovim as kept outside Israel.
+* Add `dayDecorationBuilder` to the pickers and the form fields. It is called with each day
+  as a `HebrewDay`, with its `date`, `isYomTov` and `yomTovName`, and returns the
+  `Decoration` painted behind it, e.g. to mark the Yamim Tovim, Saturdays or your own events:
+  `(day) => day.isYomTov ? myDecoration : null`. Defaults to null, which marks no days.
+* Add `yomTovLocation` to the pickers and the form fields: `YomTovLocation.israel` (the
+  default) or `YomTovLocation.outsideIsrael`, which adds the second days of Sukkot, Pesach
+  and Shavuos, the eighth day of Pesach, and Simchas Torah. It decides `HebrewDay.isYomTov`
+  and the Yom Tov named in the header.
+* The date picker's header always shows the name of a selected Yom Tov, e.g.
+  `א׳ תשרי תשפ״ז · ראש השנה`, not only when the Yamim Tovim are marked. With
+  `CalendarMode.hebrew` and `CalendarMode.gregorian` the header keeps a line for it, so it
+  is one line taller.
+* Deprecate `holidayDecoration`, which still marks the Yamim Tovim. Use
+  `dayDecorationBuilder: (day) => day.isYomTov ? myDecoration : null` instead. It will be
+  removed in 1.0.0, and can't be set together with `dayDecorationBuilder`.
+* Add `location` to `DateTime.isYomTov()` and `DateTime.getYomTovName()`, e.g.
+  `DateTime(2026, 10, 4).getYomTovName(location: YomTovLocation.outsideIsrael)` is
+  `שמחת תורה`.
+* The example app can mark Saturdays, and the Yamim Tovim as kept outside Israel.
 
 ## 0.5.0
 

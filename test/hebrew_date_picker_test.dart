@@ -10,6 +10,7 @@ void main() {
   group('HebrewDateExtension', () {
     // 12 Sep 2026 is Rosh Hashana 5787 (1 Tishrei).
     final roshHashana = DateTime(2026, 9, 12);
+    const outsideIsrael = YomTovLocation.outsideIsrael;
 
     test('formats the full Hebrew date', () {
       expect(roshHashana.getHebrewDateFormatted(), contains('תשרי'));
@@ -68,7 +69,7 @@ void main() {
       expect(DateTime(2026, 9, 28).getYomTovName(), isNull); // Chol Hamoed Sukkot
     });
 
-    test('isYomTov with inIsrael false adds the second days kept outside Israel', () {
+    test('isYomTov outside Israel adds the second days', () {
       final secondDays = [
         DateTime(2026, 9, 27), // Sukkot, day 2
         DateTime(2026, 10, 4), // Simchas Torah
@@ -78,31 +79,43 @@ void main() {
       ];
       for (final day in secondDays) {
         expect(day.isYomTov(), isFalse, reason: '$day');
-        expect(day.isYomTov(inIsrael: false), isTrue, reason: '$day');
+        expect(day.isYomTov(location: outsideIsrael), isTrue, reason: '$day');
       }
-      expect(DateTime(2026, 9, 21).isYomTov(inIsrael: false), isTrue); // Yom Kippur
-      expect(DateTime(2026, 9, 28).isYomTov(inIsrael: false), isFalse); // Chol Hamoed Sukkot
+      expect(DateTime(2026, 9, 21).isYomTov(location: outsideIsrael), isTrue); // Yom Kippur
+      // Chol Hamoed Sukkot
+      expect(DateTime(2026, 9, 28).isYomTov(location: outsideIsrael), isFalse);
     });
 
-    test('getYomTovName with inIsrael false names the second days', () {
-      expect(DateTime(2026, 10, 3).getYomTovName(inIsrael: false), 'שמיני עצרת');
-      expect(DateTime(2026, 10, 4).getYomTovName(inIsrael: false), 'שמחת תורה');
+    test('getYomTovName outside Israel names the second days', () {
+      expect(DateTime(2026, 10, 3).getYomTovName(location: outsideIsrael), 'שמיני עצרת');
+      expect(DateTime(2026, 10, 4).getYomTovName(location: outsideIsrael), 'שמחת תורה');
       expect(DateTime(2026, 10, 4).getYomTovName(), isNull);
     });
   });
 
-  group('holidays', () {
+  group('HebrewDay', () {
+    test('isYomTov and yomTovName follow yomTovLocation', () {
+      final simchasTorah = DateTime(2026, 10, 4);
+      expect(HebrewDay(simchasTorah).isYomTov, isFalse);
+      expect(HebrewDay(simchasTorah).yomTovName, isNull);
+      final outside = HebrewDay(simchasTorah, yomTovLocation: YomTovLocation.outsideIsrael);
+      expect(outside.isYomTov, isTrue);
+      expect(outside.yomTovName, 'שמחת תורה');
+    });
+  });
+
+  group('dayDecorationBuilder', () {
     const decoration = BoxDecoration(shape: BoxShape.circle, color: Colors.orange);
-    const israel = HebrewHolidays(decoration: decoration);
-    const diaspora = HebrewHolidays(decoration: decoration, inIsrael: false);
-    final holidayMark = find.byWidgetPredicate(
+    Decoration? markYomTov(HebrewDay day) => day.isYomTov ? decoration : null;
+    final dayMark = find.byWidgetPredicate(
       (widget) => widget is DecoratedBox && widget.decoration == decoration,
     );
 
     Future<void> pumpPicker(
       WidgetTester tester, {
       DateTime? initialDate,
-      HebrewHolidays? holidays,
+      DayDecorationBuilder? dayDecorationBuilder,
+      YomTovLocation yomTovLocation = YomTovLocation.israel,
       CalendarMode calendarMode = CalendarMode.both,
     }) {
       return tester.pumpWidget(
@@ -114,7 +127,8 @@ void main() {
                 firstDate: DateTime(2020),
                 lastDate: DateTime(2030),
                 calendarMode: calendarMode,
-                holidays: holidays,
+                dayDecorationBuilder: dayDecorationBuilder,
+                yomTovLocation: yomTovLocation,
                 onConfirm: (_) {},
               ),
             ),
@@ -125,59 +139,81 @@ void main() {
 
     testWidgets('marks no days by default', (tester) async {
       await pumpPicker(tester);
-      expect(find.byKey(const ValueKey('holiday-decoration')), findsNothing);
+      expect(find.byKey(const ValueKey('day-decoration')), findsNothing);
+    });
+
+    testWidgets('marks the days it returns a decoration for', (tester) async {
+      await pumpPicker(
+        tester,
+        dayDecorationBuilder: (day) => day.date.weekday == DateTime.saturday ? decoration : null,
+      );
+      // The Saturdays of September 2026: 5, 12, 19 and 26.
+      expect(dayMark, findsNWidgets(4));
+    });
+
+    testWidgets('is called with local dates without a time', (tester) async {
+      final dates = <DateTime>[];
+      await pumpPicker(
+        tester,
+        dayDecorationBuilder: (day) {
+          dates.add(day.date);
+          return null;
+        },
+      );
+      expect(dates, isNotEmpty);
+      for (final date in dates) {
+        expect(date, DateTime(date.year, date.month, date.day));
+        expect(date.isUtc, isFalse);
+      }
     });
 
     testWidgets('marks the Yamim Tovim of the Gregorian month', (tester) async {
-      await pumpPicker(tester, holidays: israel);
+      await pumpPicker(tester, dayDecorationBuilder: markYomTov);
       // Rosh Hashana (two days), Yom Kippur and Sukkot.
-      expect(holidayMark, findsNWidgets(4));
+      expect(dayMark, findsNWidgets(4));
     });
 
     testWidgets('marks the Yamim Tovim of the Hebrew month', (tester) async {
-      await pumpPicker(tester, holidays: israel, calendarMode: CalendarMode.hebrew);
+      await pumpPicker(tester, dayDecorationBuilder: markYomTov, calendarMode: CalendarMode.hebrew);
       // Tishrei: Rosh Hashana (two days), Yom Kippur, Sukkot and Shemini Atzeres.
-      expect(holidayMark, findsNWidgets(5));
+      expect(dayMark, findsNWidgets(5));
     });
 
     testWidgets('marks the second days outside Israel', (tester) async {
-      await pumpPicker(tester, holidays: diaspora, calendarMode: CalendarMode.hebrew);
-      // Tishrei: Rosh Hashana (two days), Yom Kippur, Sukkot (two days), Shemini Atzeres and
-      // Simchas Torah.
-      expect(holidayMark, findsNWidgets(7));
-    });
-
-    testWidgets('shows the name of a selected Yom Tov after the Hebrew date', (tester) async {
-      await pumpPicker(tester, holidays: israel);
-      expect(find.textContaining('ראש השנה'), findsNothing);
-      await tester.tap(find.text('12'));
-      await tester.pump();
-      expect(find.text('א׳ תשרי תשפ״ז · ראש השנה'), findsOneWidget);
-    });
-
-    testWidgets('shows the name on its own line with one calendar', (tester) async {
       await pumpPicker(
         tester,
-        initialDate: DateTime(2026, 9, 21),
-        holidays: israel,
-        calendarMode: CalendarMode.gregorian,
+        dayDecorationBuilder: markYomTov,
+        yomTovLocation: YomTovLocation.outsideIsrael,
+        calendarMode: CalendarMode.hebrew,
       );
-      expect(find.text('יום כיפור'), findsOneWidget);
+      // Tishrei: Rosh Hashana (two days), Yom Kippur, Sukkot (two days), Shemini Atzeres and
+      // Simchas Torah.
+      expect(dayMark, findsNWidgets(7));
     });
 
-    testWidgets('names Simchas Torah only outside Israel', (tester) async {
-      await pumpPicker(tester, initialDate: DateTime(2026, 10, 4), holidays: israel);
-      expect(find.textContaining('שמחת תורה'), findsNothing);
-      await pumpPicker(tester, initialDate: DateTime(2026, 10, 4), holidays: diaspora);
-      expect(find.text('כ״ג תשרי תשפ״ז · שמחת תורה'), findsOneWidget);
+    testWidgets('marks the days of the range picker', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDateRangePicker(
+                initialDateRange:
+                    DateTimeRange(start: DateTime(2026, 9, 14), end: DateTime(2026, 9, 16)),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                dayDecorationBuilder: markYomTov,
+                yomTovLocation: YomTovLocation.outsideIsrael,
+                onConfirm: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+      // Rosh Hashana (two days), Yom Kippur and Sukkot (two days).
+      expect(dayMark, findsNWidgets(5));
     });
 
-    testWidgets('shows no name without holidays', (tester) async {
-      await pumpPicker(tester, initialDate: DateTime(2026, 9, 12));
-      expect(find.textContaining('ראש השנה'), findsNothing);
-    });
-
-    testWidgets('the form field passes it to the picker', (tester) async {
+    testWidgets('the date form field passes it to the picker', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -185,7 +221,8 @@ void main() {
               initialValue: DateTime(2026, 9, 14),
               firstDate: DateTime(2020),
               lastDate: DateTime(2030),
-              holidays: diaspora,
+              dayDecorationBuilder: markYomTov,
+              yomTovLocation: YomTovLocation.outsideIsrael,
             ),
           ),
         ),
@@ -193,11 +230,29 @@ void main() {
       await tester.tap(find.byType(HebrewDateFormField));
       await tester.pumpAndSettle();
       // Rosh Hashana (two days), Yom Kippur and Sukkot (two days).
-      expect(holidayMark, findsNWidgets(5));
+      expect(dayMark, findsNWidgets(5));
     });
 
-    testWidgets('the deprecated holidayDecoration still marks the Yamim Tovim of Israel',
-        (tester) async {
+    testWidgets('the range form field passes it to the picker', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HebrewDateRangeFormField(
+              initialValue: DateTimeRange(start: DateTime(2026, 9, 14), end: DateTime(2026, 9, 16)),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              dayDecorationBuilder: markYomTov,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(HebrewDateRangeFormField));
+      await tester.pumpAndSettle();
+      // As kept in Israel: Rosh Hashana (two days), Yom Kippur and Sukkot.
+      expect(dayMark, findsNWidgets(4));
+    });
+
+    testWidgets('the deprecated holidayDecoration still marks the Yamim Tovim', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -213,17 +268,16 @@ void main() {
       );
       await tester.tap(find.byType(HebrewDateFormField));
       await tester.pumpAndSettle();
-      expect(holidayMark, findsNWidgets(4));
-      expect(find.text('א׳ תשרי תשפ״ז · ראש השנה'), findsOneWidget);
+      expect(dayMark, findsNWidgets(4));
     });
 
-    test('holidays and holidayDecoration can\'t be set together', () {
+    test('dayDecorationBuilder and holidayDecoration can\'t be set together', () {
       expect(
         () => HebrewDatePicker(
           initialDate: DateTime(2026, 9, 14),
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
-          holidays: israel,
+          dayDecorationBuilder: markYomTov,
           // ignore: deprecated_member_use_from_same_package
           holidayDecoration: decoration,
           onConfirm: (_) {},
@@ -234,12 +288,66 @@ void main() {
         () => HebrewDateRangeFormField(
           firstDate: DateTime(2020),
           lastDate: DateTime(2030),
-          holidays: israel,
+          dayDecorationBuilder: markYomTov,
           // ignore: deprecated_member_use_from_same_package
           holidayDecoration: decoration,
         ),
         throwsAssertionError,
       );
+    });
+  });
+
+  group('Yom Tov name in the header', () {
+    Future<void> pumpPicker(
+      WidgetTester tester, {
+      required DateTime initialDate,
+      YomTovLocation yomTovLocation = YomTovLocation.israel,
+      CalendarMode calendarMode = CalendarMode.both,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: HebrewDatePicker(
+                initialDate: initialDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                calendarMode: calendarMode,
+                yomTovLocation: yomTovLocation,
+                onConfirm: (_) {},
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('follows the Hebrew date of a selected Yom Tov', (tester) async {
+      await pumpPicker(tester, initialDate: DateTime(2026, 9, 14));
+      expect(find.textContaining('ראש השנה'), findsNothing);
+      await tester.tap(find.text('12'));
+      await tester.pump();
+      expect(find.text('א׳ תשרי תשפ״ז · ראש השנה'), findsOneWidget);
+    });
+
+    testWidgets('has its own line with one calendar', (tester) async {
+      await pumpPicker(
+        tester,
+        initialDate: DateTime(2026, 9, 21),
+        calendarMode: CalendarMode.gregorian,
+      );
+      expect(find.text('יום כיפור'), findsOneWidget);
+    });
+
+    testWidgets('names Simchas Torah only outside Israel', (tester) async {
+      await pumpPicker(tester, initialDate: DateTime(2026, 10, 4));
+      expect(find.textContaining('שמחת תורה'), findsNothing);
+      await pumpPicker(
+        tester,
+        initialDate: DateTime(2026, 10, 4),
+        yomTovLocation: YomTovLocation.outsideIsrael,
+      );
+      expect(find.text('כ״ג תשרי תשפ״ז · שמחת תורה'), findsOneWidget);
     });
   });
 
@@ -349,8 +457,7 @@ void main() {
 
     final anyHebrew = find.textContaining(RegExp('[א-ת]'));
 
-    testWidgets('both shows the Hebrew dates in the header and the month title',
-        (tester) async {
+    testWidgets('both shows the Hebrew dates in the header and the month title', (tester) async {
       await pumpPicker(tester, CalendarMode.both);
       expect(find.text(DateTime(2026, 9, 1).getHebrewDateFormatted()), findsOneWidget);
       expect(find.text(DateTime(2026, 9, 1).getHebrewMonthsOfMonth()), findsOneWidget);
@@ -761,7 +868,8 @@ void main() {
 
     testWidgets('starts a new range from today', (tester) async {
       await tester.pumpWidget(wrap(HebrewDateRangePicker(
-        initialDateRange: DateTimeRange(start: otherDay, end: otherDay.add(const Duration(days: 2))),
+        initialDateRange:
+            DateTimeRange(start: otherDay, end: otherDay.add(const Duration(days: 2))),
         firstDate: firstDate,
         lastDate: lastDate,
         showTodayButton: true,
@@ -1243,7 +1351,8 @@ void main() {
     });
 
     group('default range text', () {
-      Future<String> rangeText(WidgetTester tester, DateTimeRange range, CalendarMode calendarMode) async {
+      Future<String> rangeText(
+          WidgetTester tester, DateTimeRange range, CalendarMode calendarMode) async {
         await pumpField(
           tester,
           HebrewDateRangeFormField(

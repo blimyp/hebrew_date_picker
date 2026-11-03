@@ -5,7 +5,8 @@ import 'package:kosher_dart/kosher_dart.dart';
 import 'calendar_mode.dart';
 import 'hebrew_date_extension.dart';
 import 'hebrew_date_picker.dart';
-import 'hebrew_holidays.dart';
+import 'hebrew_day.dart';
+import 'yom_tov_location.dart';
 
 /// Formats a date for the text of a [HebrewDateFormField] or a [HebrewDateRangeFormField].
 typedef HebrewDateFieldFormatter = String Function(BuildContext context, DateTime date);
@@ -44,8 +45,10 @@ class HebrewDateFormField extends FormField<DateTime> {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
-    this.holidays,
-    @Deprecated('Use holidays instead. Will be removed in 1.0.0.') this.holidayDecoration,
+    this.dayDecorationBuilder,
+    this.yomTovLocation = YomTovLocation.israel,
+    @Deprecated('Use dayDecorationBuilder instead. Will be removed in 1.0.0.')
+    this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -55,8 +58,8 @@ class HebrewDateFormField extends FormField<DateTime> {
     this.secondaryTextColor,
   })  : calendarMode = dayMode ?? calendarMode,
         assert(
-          holidays == null || holidayDecoration == null,
-          'Pass either holidays or holidayDecoration, not both.',
+          dayDecorationBuilder == null || holidayDecoration == null,
+          'Pass either dayDecorationBuilder or holidayDecoration, not both.',
         ),
         super(
           initialValue: initialValue == null ? null : _dateOnly(initialValue),
@@ -106,12 +109,14 @@ class HebrewDateFormField extends FormField<DateTime> {
   /// See [HebrewDatePicker.showTodayButton].
   final bool showTodayButton;
 
-  /// See [HebrewDatePicker.holidays].
-  final HebrewHolidays? holidays;
+  /// See [HebrewDatePicker.dayDecorationBuilder].
+  final DayDecorationBuilder? dayDecorationBuilder;
 
-  /// The old way to mark the Yamim Tovim, as kept in Israel. The same as
-  /// `holidays: HebrewHolidays(decoration: holidayDecoration)`. Can't be set with [holidays].
-  @Deprecated('Use holidays instead. Will be removed in 1.0.0.')
+  /// See [HebrewDatePicker.yomTovLocation].
+  final YomTovLocation yomTovLocation;
+
+  /// See [HebrewDatePicker.holidayDecoration].
+  @Deprecated('Use dayDecorationBuilder instead. Will be removed in 1.0.0.')
   final Decoration? holidayDecoration;
 
   /// See [HebrewDatePicker.locale].
@@ -173,7 +178,8 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
       calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
-      holidays: widget.holidays,
+      dayDecorationBuilder: widget.dayDecorationBuilder,
+      yomTovLocation: widget.yomTovLocation,
       // ignore: deprecated_member_use_from_same_package
       holidayDecoration: widget.holidayDecoration,
       locale: widget.locale,
@@ -224,8 +230,10 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     @Deprecated('Use calendarMode instead. Will be removed in 1.0.0.') CalendarMode? dayMode,
     this.initialDatePickerMode = DatePickerMode.day,
     this.showTodayButton = false,
-    this.holidays,
-    @Deprecated('Use holidays instead. Will be removed in 1.0.0.') this.holidayDecoration,
+    this.dayDecorationBuilder,
+    this.yomTovLocation = YomTovLocation.israel,
+    @Deprecated('Use dayDecorationBuilder instead. Will be removed in 1.0.0.')
+    this.holidayDecoration,
     this.locale,
     this.helpText,
     this.cancelText,
@@ -235,8 +243,8 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     this.secondaryTextColor,
   })  : calendarMode = dayMode ?? calendarMode,
         assert(
-          holidays == null || holidayDecoration == null,
-          'Pass either holidays or holidayDecoration, not both.',
+          dayDecorationBuilder == null || holidayDecoration == null,
+          'Pass either dayDecorationBuilder or holidayDecoration, not both.',
         ),
         super(
           initialValue: initialValue == null
@@ -292,12 +300,14 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
   /// See [HebrewDateRangePicker.showTodayButton].
   final bool showTodayButton;
 
-  /// See [HebrewDateRangePicker.holidays].
-  final HebrewHolidays? holidays;
+  /// See [HebrewDateRangePicker.dayDecorationBuilder].
+  final DayDecorationBuilder? dayDecorationBuilder;
 
-  /// The old way to mark the Yamim Tovim, as kept in Israel. The same as
-  /// `holidays: HebrewHolidays(decoration: holidayDecoration)`. Can't be set with [holidays].
-  @Deprecated('Use holidays instead. Will be removed in 1.0.0.')
+  /// See [HebrewDateRangePicker.yomTovLocation].
+  final YomTovLocation yomTovLocation;
+
+  /// See [HebrewDateRangePicker.holidayDecoration].
+  @Deprecated('Use dayDecorationBuilder instead. Will be removed in 1.0.0.')
   final Decoration? holidayDecoration;
 
   /// See [HebrewDateRangePicker.locale].
@@ -359,7 +369,8 @@ class _HebrewDateRangeFormFieldState extends _PickerFormFieldState<DateTimeRange
       calendarMode: widget.calendarMode,
       initialDatePickerMode: widget.initialDatePickerMode,
       showTodayButton: widget.showTodayButton,
-      holidays: widget.holidays,
+      dayDecorationBuilder: widget.dayDecorationBuilder,
+      yomTovLocation: widget.yomTovLocation,
       // ignore: deprecated_member_use_from_same_package
       holidayDecoration: widget.holidayDecoration,
       locale: widget.locale,

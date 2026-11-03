@@ -145,7 +145,8 @@ both ends share once, so both calendars fit in one field:
 | `calendarMode` | `CalendarMode.both` |
 | `selectableDayPredicate` | every day is selectable |
 | `showTodayButton` | `false` |
-| `holidays` | `null` (no days are marked) |
+| `dayDecorationBuilder` | `null` (no days are marked) |
+| `yomTovLocation` | `YomTovLocation.israel` |
 | `initialDatePickerMode` | `DatePickerMode.day` |
 | `primaryColor` | `ColorScheme.primary` |
 | `secondaryTextColor` | `ColorScheme.onSurfaceVariant` |
@@ -211,12 +212,11 @@ showHebrewDatePicker(
 today's month and selects today (in the range picker, as the start of a new range). It is
 disabled when today is outside `firstDate`–`lastDate` or isn't selectable.
 
-`holidays` marks the Yamim Tovim: Rosh Hashana, Yom Kippur, the first day of Sukkot, Shemini
-Atzeres, the first and last days of Pesach and Shavuos, as kept in Israel. Chol Hamoed,
-Chanukah, Purim, fasts and modern holidays are not marked. Its `decoration` takes any
-`Decoration`, painted behind the day, so a selected day's circle covers it. When a Yom Tov is
-selected, the date picker's header shows its name after the Hebrew date. For example, an
-orange ring:
+`dayDecorationBuilder` marks days: it is called with each day as a `HebrewDay` and returns
+the `Decoration` painted behind it, or `null` to leave it unmarked. A selected day's circle
+covers the decoration. `HebrewDay` has the `date` (without a time), `isYomTov` and
+`yomTovName`. For example, an orange ring on the Yamim Tovim and a light background on
+Saturdays:
 
 ```dart
 showHebrewDatePicker(
@@ -224,14 +224,25 @@ showHebrewDatePicker(
   initialDate: DateTime(2026, 9, 1),
   firstDate: DateTime(2020),
   lastDate: DateTime(2030),
-  holidays: HebrewHolidays(
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.orange, width: 2),
-    ),
-  ),
+  dayDecorationBuilder: (day) {
+    if (day.isYomTov) {
+      return BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.orange, width: 2),
+      );
+    }
+    if (day.date.weekday == DateTime.saturday) {
+      return BoxDecoration(shape: BoxShape.circle, color: Colors.blue.shade50);
+    }
+    return null;
+  },
 );
 ```
+
+The Yamim Tovim are Rosh Hashana, Yom Kippur, the first day of Sukkot, Shemini Atzeres, the
+first and last days of Pesach and Shavuos. Chol Hamoed, Chanukah, Purim, fasts and modern
+holidays are not Yamim Tovim. When a Yom Tov is selected, the date picker's header shows its
+name after the Hebrew date, whether or not it is marked.
 
 Here the dashed circles mark Rosh Hashana (12–13), Yom Kippur (21) and Sukkot (26), and the
 header names the selected day, Rosh Hashana. The example app draws the circles with a custom
@@ -239,15 +250,19 @@ header names the selected day, Rosh Hashana. The example app draws the circles w
 
 <img src="https://raw.githubusercontent.com/blimyp/hebrew_date_picker/main/screenshots/hebrew_holidays.png" alt="Hebrew date picker marking the Yamim Tovim with a dashed circle" width="260">
 
-Outside Israel, pass `inIsrael: false` to also mark the second days of Sukkot, Pesach and
-Shavuos, the eighth day of Pesach, and Simchas Torah:
+`yomTovLocation` decides which days are Yom Tov, both for `day.isYomTov` and for the name in
+the header. It defaults to `YomTovLocation.israel`. Outside Israel, pass
+`YomTovLocation.outsideIsrael` to add the second days of Sukkot, Pesach and Shavuos, the
+eighth day of Pesach, and Simchas Torah. The builder stays the same:
 
 ```dart
-holidays: HebrewHolidays(decoration: myDecoration, inIsrael: false),
+yomTovLocation: YomTovLocation.outsideIsrael,
+dayDecorationBuilder: (day) => day.isYomTov ? myDecoration : null,
 ```
 
-`holidayDecoration` from 0.5.0 still works, as `holidays: HebrewHolidays(decoration: ...)`, but
-is deprecated and will be removed in 1.0.0.
+`holidayDecoration` from 0.5.0 still works, as
+`dayDecorationBuilder: (day) => day.isYomTov ? holidayDecoration : null`, but is deprecated
+and will be removed in 1.0.0.
 
 `locale` controls the Gregorian month title and the weekday names. For a locale other than
 `en_US`, initialize the date formatting data first, e.g. by adding `flutter_localizations` to
@@ -258,15 +273,15 @@ your app or calling `initializeDateFormatting()` from `package:intl/date_symbol_
 The `DateTime` extension used by the picker is exported as well:
 
 ```dart
-DateTime(2026, 9, 12).getHebrewDateFormatted();       // א׳ תשרי תשפ״ז
-DateTime(2026, 9, 12).getHebrewDayOfMonth();          // א׳
-DateTime(2026, 9, 1).getHebrewMonthsOfMonth();        // אלול–תשרי תשפ״ז
-DateTime(1990).getHebrewYearsOfYear();                // תש״נ–תשנ״א
-DateTime(2026, 9, 21).isYomTov();                     // true (Yom Kippur)
-DateTime(2026, 9, 21).getYomTovName();                // יום כיפור
-DateTime(2026, 10, 4).isYomTov();                     // false (in Israel)
-DateTime(2026, 10, 4).isYomTov(inIsrael: false);      // true (Simchas Torah)
-DateTime(2026, 10, 4).getYomTovName(inIsrael: false); // שמחת תורה
+DateTime(2026, 9, 12).getHebrewDateFormatted();                              // א׳ תשרי תשפ״ז
+DateTime(2026, 9, 12).getHebrewDayOfMonth();                                 // א׳
+DateTime(2026, 9, 1).getHebrewMonthsOfMonth();                               // אלול–תשרי תשפ״ז
+DateTime(1990).getHebrewYearsOfYear();                                       // תש״נ–תשנ״א
+DateTime(2026, 9, 21).isYomTov();                                            // true (Yom Kippur)
+DateTime(2026, 9, 21).getYomTovName();                                       // יום כיפור
+DateTime(2026, 10, 4).isYomTov();                                            // false (in Israel)
+DateTime(2026, 10, 4).isYomTov(location: YomTovLocation.outsideIsrael);      // true (Simchas Torah)
+DateTime(2026, 10, 4).getYomTovName(location: YomTovLocation.outsideIsrael); // שמחת תורה
 ```
 
 ## Example

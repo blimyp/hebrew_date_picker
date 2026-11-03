@@ -32,14 +32,23 @@ class _ExamplePageState extends State<ExamplePage> {
   bool _disableSaturdays = false;
   bool _showTodayButton = false;
   _HolidayStyle _holidayStyle = _HolidayStyle.none;
+  bool _markSaturdays = false;
   bool _outsideIsrael = false;
 
   bool _isSelectable(DateTime day) => !_disableSaturdays || day.weekday != DateTime.saturday;
 
-  HebrewHolidays? get _holidays {
-    final decoration = _holidayStyle.decoration(Theme.of(context).colorScheme);
-    if (decoration == null) return null;
-    return HebrewHolidays(decoration: decoration, inIsrael: !_outsideIsrael);
+  YomTovLocation get _yomTovLocation =>
+      _outsideIsrael ? YomTovLocation.outsideIsrael : YomTovLocation.israel;
+
+  /// Marks the Yamim Tovim in the chosen style, and Saturdays with a light background.
+  Decoration? _decorateDay(HebrewDay day) {
+    final colors = Theme.of(context).colorScheme;
+    final holiday = day.isYomTov ? _holidayStyle.decoration(colors) : null;
+    if (holiday != null) return holiday;
+    if (_markSaturdays && day.date.weekday == DateTime.saturday) {
+      return BoxDecoration(shape: BoxShape.circle, color: colors.tertiaryContainer);
+    }
+    return null;
   }
 
   Future<void> _pickDate() async {
@@ -51,7 +60,8 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      holidays: _holidays,
+      dayDecorationBuilder: _decorateDay,
+      yomTovLocation: _yomTovLocation,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _date = picked);
@@ -68,7 +78,8 @@ class _ExamplePageState extends State<ExamplePage> {
       lastDate: DateTime(2035),
       selectableDayPredicate: _isSelectable,
       showTodayButton: _showTodayButton,
-      holidays: _holidays,
+      dayDecorationBuilder: _decorateDay,
+      yomTovLocation: _yomTovLocation,
       calendarMode: _calendarMode,
     );
     if (picked != null) setState(() => _range = picked);
@@ -130,9 +141,15 @@ class _ExamplePageState extends State<ExamplePage> {
                 child: SwitchListTile(
                   title: const Text('Outside Israel'),
                   value: _outsideIsrael,
-                  onChanged: _holidayStyle == _HolidayStyle.none
-                      ? null
-                      : (value) => setState(() => _outsideIsrael = value),
+                  onChanged: (value) => setState(() => _outsideIsrael = value),
+                ),
+              ),
+              SizedBox(
+                width: 280,
+                child: SwitchListTile(
+                  title: const Text('Mark Saturdays'),
+                  value: _markSaturdays,
+                  onChanged: (value) => setState(() => _markSaturdays = value),
                 ),
               ),
               const SizedBox(height: 28),
@@ -162,7 +179,8 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  holidays: _holidays,
+                  dayDecorationBuilder: _decorateDay,
+                  yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date field',
@@ -179,7 +197,8 @@ class _ExamplePageState extends State<ExamplePage> {
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
                   showTodayButton: _showTodayButton,
-                  holidays: _holidays,
+                  dayDecorationBuilder: _decorateDay,
+                  yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
                     labelText: 'Date range field',
@@ -196,7 +215,7 @@ class _ExamplePageState extends State<ExamplePage> {
   }
 }
 
-/// Ways to mark the holidays: `HebrewHolidays.decoration` takes any [Decoration].
+/// Ways to mark the holidays: `dayDecorationBuilder` returns any [Decoration].
 enum _HolidayStyle {
   none('None'),
   border('Border'),
