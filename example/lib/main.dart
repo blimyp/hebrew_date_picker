@@ -13,6 +13,7 @@ class ExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hebrew Date Picker',
       theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      darkTheme: ThemeData(colorSchemeSeed: Colors.indigo, brightness: Brightness.dark),
       home: const ExamplePage(),
     );
   }
@@ -87,94 +88,105 @@ class _ExamplePageState extends State<ExamplePage> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final options = [
+      _Section(
+        title: 'Calendar',
+        description: 'Which dates each day shows.',
+        children: [
+          _Segments<CalendarMode>(
+            values: CalendarMode.values,
+            labels: const {
+              CalendarMode.both: 'Both',
+              CalendarMode.hebrew: 'Hebrew',
+              CalendarMode.gregorian: 'Gregorian',
+            },
+            selected: _calendarMode,
+            onChanged: (mode) => setState(() => _calendarMode = mode),
+          ),
+          _SwitchTile(
+            title: 'Show today button',
+            parameter: 'showTodayButton',
+            value: _showTodayButton,
+            onChanged: (value) => setState(() => _showTodayButton = value),
+          ),
+        ],
+      ),
+      _Section(
+        title: 'Saturdays',
+        children: [
+          _SwitchTile(
+            title: 'Disable Saturdays',
+            parameter: 'selectableDayPredicate',
+            value: _disableSaturdays,
+            onChanged: (value) => setState(() => _disableSaturdays = value),
+          ),
+          _SwitchTile(
+            title: 'Mark Saturdays',
+            parameter: 'dayDecorationBuilder',
+            value: _markSaturdays,
+            onChanged: (value) => setState(() => _markSaturdays = value),
+          ),
+        ],
+      ),
+      _Section(
+        title: 'Holidays',
+        description: 'Marked with dayDecorationBuilder, like any other day.',
+        children: [
+          _Segments<_HolidayStyle>(
+            values: _HolidayStyle.values,
+            labels: {for (final style in _HolidayStyle.values) style: style.label},
+            selected: _holidayStyle,
+            onChanged: (style) => setState(() => _holidayStyle = style),
+          ),
+          _SwitchTile(
+            title: 'Outside Israel',
+            parameter: 'yomTovLocation',
+            value: _outsideIsrael,
+            onChanged: (value) => setState(() => _outsideIsrael = value),
+          ),
+        ],
+      ),
+    ];
+
     final localizations = MaterialLocalizations.of(context);
     final range = _range;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Hebrew Date Picker')),
-      // Centered when the content fits, scrollable when it doesn't.
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SegmentedButton<CalendarMode>(
-                segments: const [
-                  ButtonSegment(value: CalendarMode.both, label: Text('Both')),
-                  ButtonSegment(value: CalendarMode.hebrew, label: Text('Hebrew')),
-                  ButtonSegment(value: CalendarMode.gregorian, label: Text('Gregorian')),
-                ],
-                selected: {_calendarMode},
-                onSelectionChanged: (modes) => setState(() => _calendarMode = modes.first),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 280,
-                child: SwitchListTile(
-                  title: const Text('Disable Saturdays'),
-                  value: _disableSaturdays,
-                  onChanged: (value) => setState(() => _disableSaturdays = value),
-                ),
-              ),
-              SizedBox(
-                width: 280,
-                child: SwitchListTile(
-                  title: const Text('Show today button'),
-                  value: _showTodayButton,
-                  onChanged: (value) => setState(() => _showTodayButton = value),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text('Holidays', style: textTheme.titleSmall),
-              const SizedBox(height: 8),
-              SegmentedButton<_HolidayStyle>(
-                segments: [
-                  for (final style in _HolidayStyle.values)
-                    ButtonSegment(value: style, label: Text(style.label)),
-                ],
-                selected: {_holidayStyle},
-                onSelectionChanged: (styles) => setState(() => _holidayStyle = styles.first),
-              ),
-              SizedBox(
-                width: 280,
-                child: SwitchListTile(
-                  title: const Text('Outside Israel'),
-                  value: _outsideIsrael,
-                  onChanged: (value) => setState(() => _outsideIsrael = value),
-                ),
-              ),
-              SizedBox(
-                width: 280,
-                child: SwitchListTile(
-                  title: const Text('Mark Saturdays'),
-                  value: _markSaturdays,
-                  onChanged: (value) => setState(() => _markSaturdays = value),
-                ),
-              ),
-              const SizedBox(height: 28),
-              FilledButton(onPressed: _pickDate, child: const Text('Pick a date')),
-              const SizedBox(height: 12),
-              Text(localizations.formatFullDate(_date), style: textTheme.titleMedium),
-              Text(_date.getHebrewDateFormatted(), style: textTheme.titleLarge),
-              const SizedBox(height: 40),
-              FilledButton(onPressed: _pickRange, child: const Text('Pick a date range')),
-              if (range != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${localizations.formatMediumDate(range.start)} – '
+    final demos = [
+      _Section(
+        title: 'Date picker',
+        description: 'showHebrewDatePicker',
+        children: [
+          _Result(
+            hebrew: _date.getHebrewDateFormatted(),
+            gregorian: localizations.formatFullDate(_date),
+          ),
+          _PickButton(icon: Icons.event, label: 'Pick a date', onPressed: _pickDate),
+        ],
+      ),
+      _Section(
+        title: 'Date range picker',
+        description: 'showHebrewDateRangePicker',
+        children: [
+          if (range == null)
+            const _Result(gregorian: 'No range selected')
+          else
+            _Result(
+              hebrew: '${range.start.getHebrewDateFormatted()} – '
+                  '${range.end.getHebrewDateFormatted()}',
+              gregorian: '${localizations.formatMediumDate(range.start)} – '
                   '${localizations.formatMediumDate(range.end)}',
-                  style: textTheme.titleMedium,
-                ),
-                Text(
-                  '${range.start.getHebrewDateFormatted()} – ${range.end.getHebrewDateFormatted()}',
-                  style: textTheme.titleLarge,
-                ),
-              ],
-              const SizedBox(height: 40),
-              SizedBox(
-                width: 360,
-                child: HebrewDateFormField(
+            ),
+          _PickButton(icon: Icons.date_range, label: 'Pick a date range', onPressed: _pickRange),
+        ],
+      ),
+      _Section(
+        title: 'Form fields',
+        description: 'HebrewDateFormField · HebrewDateRangeFormField',
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                HebrewDateFormField(
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
@@ -183,16 +195,13 @@ class _ExamplePageState extends State<ExamplePage> {
                   yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
-                    labelText: 'Date field',
+                    labelText: 'Date',
                     suffixIcon: Icon(Icons.calendar_today),
                     border: OutlineInputBorder(),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: 360,
-                child: HebrewDateRangeFormField(
+                const SizedBox(height: 16),
+                HebrewDateRangeFormField(
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2035),
                   selectableDayPredicate: _isSelectable,
@@ -201,16 +210,234 @@ class _ExamplePageState extends State<ExamplePage> {
                   yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
                   decoration: const InputDecoration(
-                    labelText: 'Date range field',
+                    labelText: 'Date range',
                     suffixIcon: Icon(Icons.date_range),
                     border: OutlineInputBorder(),
                   ),
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Hebrew Date Picker')),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // The options beside the demos on wide screens, below them on narrow ones.
+          final bool wide = constraints.maxWidth >= 840;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: wide ? 1000 : 560),
+                child: wide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _Group(title: 'Try it', children: demos)),
+                          const SizedBox(width: 24),
+                          Expanded(child: _Group(title: 'Options', children: options)),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          _Group(title: 'Try it', children: demos),
+                          const SizedBox(height: 24),
+                          _Group(title: 'Options', children: options),
+                        ],
+                      ),
               ),
-            ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A titled column of sections.
+class _Group extends StatelessWidget {
+  const _Group({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+          child: Text(
+            title.toUpperCase(),
+            style: theme.textTheme.labelLarge
+                ?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2),
           ),
         ),
+        for (final (index, child) in children.indexed) ...[
+          if (index > 0) const SizedBox(height: 12),
+          child,
+        ],
+      ],
+    );
+  }
+}
+
+/// A card with a title, an optional description and its content.
+class _Section extends StatelessWidget {
+  const _Section({required this.title, this.description, required this.children});
+
+  final String title;
+  final String? description;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final description = this.description;
+    return Card.outlined(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleMedium),
+                  if (description != null)
+                    Text(
+                      description,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                ],
+              ),
+            ),
+            ...children,
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// A full-width segmented button with one choice selected.
+class _Segments<T> extends StatelessWidget {
+  const _Segments({
+    required this.values,
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<T> values;
+  final Map<T, String> labels;
+  final T selected;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: SegmentedButton<T>(
+        expandedInsets: EdgeInsets.zero,
+        showSelectedIcon: false,
+        segments: [
+          for (final value in values) ButtonSegment(value: value, label: Text(labels[value]!)),
+        ],
+        selected: {selected},
+        onSelectionChanged: (values) => onChanged(values.first),
+      ),
+    );
+  }
+}
+
+/// A switch labelled with the picker parameter it drives.
+class _SwitchTile extends StatelessWidget {
+  const _SwitchTile({
+    required this.title,
+    required this.parameter,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String parameter;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SwitchListTile(
+      title: Text(title),
+      subtitle: Text(
+        parameter,
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontFamily: 'monospace',
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+}
+
+/// The picked value in both calendars.
+class _Result extends StatelessWidget {
+  const _Result({this.hebrew, required this.gregorian});
+
+  final String? hebrew;
+  final String gregorian;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hebrew = this.hebrew;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          if (hebrew != null)
+            Text(hebrew, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+          Text(
+            gregorian,
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PickButton extends StatelessWidget {
+  const _PickButton({required this.icon, required this.label, required this.onPressed});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: FilledButton.icon(onPressed: onPressed, icon: Icon(icon), label: Text(label)),
     );
   }
 }
