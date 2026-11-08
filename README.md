@@ -23,7 +23,7 @@ calendar grid is built on [table_calendar](https://pub.dev/packages/table_calend
 
 ```yaml
 dependencies:
-  hebrew_date_picker: ^0.5.0
+  hebrew_date_picker: ^0.6.0
 ```
 
 ## Usage

@@ -1,4 +1,4 @@
-## Unreleased
+## 0.6.0
 
 * Add `dayDecorationBuilder` to the pickers and the form fields. It is called with each day
   as a `HebrewDay`, with its `date`, `isYomTov` and `yomTovName`, and returns the
