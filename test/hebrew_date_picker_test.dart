@@ -1350,6 +1350,153 @@ void main() {
       }
     });
 
+    group('clearable', () {
+      testWidgets('the clear button clears the date field and reports null', (tester) async {
+        final changes = <DateTime?>[];
+        await pumpField(
+          tester,
+          HebrewDateFormField(
+            initialValue: DateTime(2026, 9, 1),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            calendarMode: CalendarMode.gregorian,
+            clearable: true,
+            onChanged: changes.add,
+          ),
+        );
+        expect(find.byTooltip('Delete'), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.clear));
+        await tester.pumpAndSettle();
+
+        expect(changes, [null]);
+        expect(find.text('Sep 1, 2026'), findsNothing);
+        expect(find.byType(HebrewDatePicker), findsNothing);
+        // An empty field has nothing to clear.
+        expect(find.byIcon(Icons.clear), findsNothing);
+      });
+
+      testWidgets('the clear button clears the range field and reports null', (tester) async {
+        final changes = <DateTimeRange?>[];
+        await pumpField(
+          tester,
+          HebrewDateRangeFormField(
+            initialValue: DateTimeRange(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 3)),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            calendarMode: CalendarMode.gregorian,
+            clearable: true,
+            clearTooltip: 'Clear range',
+            onChanged: changes.add,
+          ),
+        );
+
+        await tester.tap(find.byTooltip('Clear range'));
+        await tester.pumpAndSettle();
+
+        expect(changes, [null]);
+        expect(find.text('Sep 1 – Sep 3, 2026'), findsNothing);
+        expect(find.byType(HebrewDateRangePicker), findsNothing);
+      });
+
+      testWidgets('a cleared field validates as empty and can be picked again', (tester) async {
+        useTallView(tester);
+        final formKey = GlobalKey<FormState>();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Form(
+                key: formKey,
+                child: HebrewDateFormField(
+                  initialValue: DateTime(2026, 9, 1),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                  calendarMode: CalendarMode.gregorian,
+                  clearable: true,
+                  validator: (date) => date == null ? 'Pick a date' : null,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        await tester.tap(find.byIcon(Icons.clear));
+        await tester.pump();
+        expect(formKey.currentState!.validate(), isFalse);
+
+        await tester.tap(find.byType(TextField));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('OK'));
+        await tester.pumpAndSettle();
+        expect(formKey.currentState!.validate(), isTrue);
+      });
+
+      testWidgets('the clear button sits before the suffix icon', (tester) async {
+        await pumpField(
+          tester,
+          HebrewDateFormField(
+            initialValue: DateTime(2026, 9, 1),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            clearable: true,
+            decoration: const InputDecoration(suffixIcon: Icon(Icons.calendar_today)),
+          ),
+        );
+
+        final clear = tester.getCenter(find.byIcon(Icons.clear));
+        final calendar = tester.getCenter(find.byIcon(Icons.calendar_today));
+        expect(clear.dx, lessThan(calendar.dx));
+      });
+
+      testWidgets('Delete and Backspace clear a focused field', (tester) async {
+        for (final key in [LogicalKeyboardKey.delete, LogicalKeyboardKey.backspace]) {
+          final focusNode = FocusNode();
+          addTearDown(focusNode.dispose);
+          DateTime? changed = DateTime(2000);
+          await pumpField(
+            tester,
+            HebrewDateFormField(
+              key: UniqueKey(),
+              initialValue: DateTime(2026, 9, 1),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              clearable: true,
+              focusNode: focusNode,
+              onChanged: (date) => changed = date,
+            ),
+          );
+
+          focusNode.requestFocus();
+          await tester.pump();
+          await tester.sendKeyEvent(key);
+          await tester.pump();
+
+          expect(changed, isNull, reason: '$key');
+        }
+      });
+
+      testWidgets('a field that is not clearable or is disabled has no clear button',
+          (tester) async {
+        for (final field in [
+          HebrewDateFormField(
+            initialValue: DateTime(2026, 9, 1),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+          ),
+          HebrewDateFormField(
+            initialValue: DateTime(2026, 9, 1),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2030),
+            clearable: true,
+            enabled: false,
+          ),
+        ]) {
+          await pumpField(tester, field);
+          expect(find.byIcon(Icons.clear), findsNothing);
+        }
+      });
+    });
+
     group('default range text', () {
       Future<String> rangeText(
           WidgetTester tester, DateTimeRange range, CalendarMode calendarMode) async {

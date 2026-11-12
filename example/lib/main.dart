@@ -194,6 +194,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   dayDecorationBuilder: _decorateDay,
                   yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
+                  clearable: true,
                   decoration: const InputDecoration(
                     labelText: 'Date',
                     suffixIcon: Icon(Icons.calendar_today),
@@ -209,6 +210,7 @@ class _ExamplePageState extends State<ExamplePage> {
                   dayDecorationBuilder: _decorateDay,
                   yomTovLocation: _yomTovLocation,
                   calendarMode: _calendarMode,
+                  clearable: true,
                   decoration: const InputDecoration(
                     labelText: 'Date range',
                     suffixIcon: Icon(Icons.date_range),

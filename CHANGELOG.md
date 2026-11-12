@@ -1,3 +1,13 @@
+## Unreleased
+
+* Add `clearable` to `HebrewDateFormField` and `HebrewDateRangeFormField`. When true and the
+  field has a value, a clear button is shown before the decoration's suffix icon, and Delete
+  or Backspace clear a focused field. Clearing sets the value to null and calls `onChanged`
+  with null. Defaults to false.
+* Add `clearTooltip` to the form fields, the tooltip of the clear button. Defaults to
+  `MaterialLocalizations.deleteButtonTooltip`.
+* The example app's form fields are clearable.
+
 ## 0.6.0
 
 * Add `dayDecorationBuilder` to the pickers and the form fields. It is called with each day

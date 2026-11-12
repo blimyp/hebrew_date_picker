@@ -116,11 +116,27 @@ HebrewDateFormField(
 )
 ```
 
-`onChanged` takes a nullable date (`ValueChanged<DateTime?>`), leaving room for clearing the
-field in a later version.
+`clearable: true` lets the user clear an optional field: while it has a date, a clear button
+is shown before the decoration's `suffixIcon`, and Delete or Backspace clear it when focused.
+Clearing sets the value to `null` and calls `onChanged` with `null`, so `onChanged` takes a
+nullable date (`ValueChanged<DateTime?>`). `clearTooltip` sets the button's tooltip, which
+defaults to `MaterialLocalizations.deleteButtonTooltip`:
+
+```dart
+HebrewDateFormField(
+  firstDate: DateTime(2020),
+  lastDate: DateTime(2030),
+  clearable: true,
+  decoration: const InputDecoration(
+    labelText: 'Date (optional)',
+    suffixIcon: Icon(Icons.calendar_today),
+  ),
+  onChanged: (date) => print(date ?? 'cleared'),
+)
+```
 
 The field takes the same customization parameters as `HebrewDatePicker`, plus `decoration`,
-`style`, `textAlign`, `focusNode` and `enabled`. Tapping it, or pressing Enter or Space while
+`style`, `textAlign`, `focusNode`, `enabled`, `clearable` and `clearTooltip`. Tapping it, or pressing Enter or Space while
 it is focused, opens the picker. By default its text follows `calendarMode`: the Gregorian
 and the Hebrew date (`Oct 15, 2026 · ד׳ חשוון תשפ״ז`) for `both`, only the Hebrew date for
 `hebrew` and only the Gregorian date for `gregorian`. Pass `dateFormatter` to show something

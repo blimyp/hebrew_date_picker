@@ -39,6 +39,8 @@ class HebrewDateFormField extends FormField<DateTime> {
     this.style,
     this.textAlign = TextAlign.start,
     this.focusNode,
+    this.clearable = false,
+    this.clearTooltip,
     this.dateFormatter,
     this.selectableDayPredicate,
     CalendarMode calendarMode = CalendarMode.both,
@@ -72,9 +74,8 @@ class HebrewDateFormField extends FormField<DateTime> {
   /// The latest date the picker allows.
   final DateTime lastDate;
 
-  /// Called with the picked date (time stripped) whenever the user picks a new one.
-  ///
-  /// The date is nullable so that a future way to clear the field can report it.
+  /// Called with the picked date (time stripped) whenever the user picks a new one, and with
+  /// null when the user clears the field (see [clearable]).
   final ValueChanged<DateTime?>? onChanged;
 
   /// The decoration of the text field, e.g. its label, hint and icons. The [validator]'s
@@ -89,6 +90,17 @@ class HebrewDateFormField extends FormField<DateTime> {
 
   /// The focus node of the text field.
   final FocusNode? focusNode;
+
+  /// Whether the user can clear the field. When true and the field has a date, a clear
+  /// button is shown before the decoration's suffix icon, and Delete or Backspace clear a
+  /// focused field. Clearing sets the value to null and calls [onChanged] with null.
+  ///
+  /// Defaults to false.
+  final bool clearable;
+
+  /// The tooltip of the clear button. Defaults to
+  /// [MaterialLocalizations.deleteButtonTooltip].
+  final String? clearTooltip;
 
   /// Formats the date shown in the field. Defaults to a format that follows [calendarMode].
   final HebrewDateFieldFormatter? dateFormatter;
@@ -161,6 +173,12 @@ class _HebrewDateFormFieldState extends _PickerFormFieldState<DateTime> {
   FocusNode? get _focusNode => widget.focusNode;
 
   @override
+  bool get _clearable => widget.clearable;
+
+  @override
+  String? get _clearTooltip => widget.clearTooltip;
+
+  @override
   String _format(DateTime value) =>
       (widget.dateFormatter ?? _defaultFormatter(widget.calendarMode))(context, value);
 
@@ -224,6 +242,8 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
     this.style,
     this.textAlign = TextAlign.start,
     this.focusNode,
+    this.clearable = false,
+    this.clearTooltip,
     this.dateFormatter,
     this.selectableDayPredicate,
     CalendarMode calendarMode = CalendarMode.both,
@@ -262,9 +282,8 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
   /// The latest date the picker allows.
   final DateTime lastDate;
 
-  /// Called with the picked range (times stripped) whenever the user picks a new one.
-  ///
-  /// The range is nullable so that a future way to clear the field can report it.
+  /// Called with the picked range (times stripped) whenever the user picks a new one, and
+  /// with null when the user clears the field (see [clearable]).
   final ValueChanged<DateTimeRange?>? onChanged;
 
   /// The decoration of the text field, e.g. its label, hint and icons. The [validator]'s
@@ -279,6 +298,17 @@ class HebrewDateRangeFormField extends FormField<DateTimeRange> {
 
   /// The focus node of the text field.
   final FocusNode? focusNode;
+
+  /// Whether the user can clear the field. When true and the field has a range, a clear
+  /// button is shown before the decoration's suffix icon, and Delete or Backspace clear a
+  /// focused field. Clearing sets the value to null and calls [onChanged] with null.
+  ///
+  /// Defaults to false.
+  final bool clearable;
+
+  /// The tooltip of the clear button. Defaults to
+  /// [MaterialLocalizations.deleteButtonTooltip].
+  final String? clearTooltip;
 
   /// Formats each end of the range shown in the field. Defaults to a format that follows
   /// [calendarMode].
@@ -352,6 +382,12 @@ class _HebrewDateRangeFormFieldState extends _PickerFormFieldState<DateTimeRange
   FocusNode? get _focusNode => widget.focusNode;
 
   @override
+  bool get _clearable => widget.clearable;
+
+  @override
+  String? get _clearTooltip => widget.clearTooltip;
+
+  @override
   String _format(DateTimeRange value) {
     final format = widget.dateFormatter;
     if (format == null) return _defaultRangeText(context, value, widget.calendarMode);
@@ -396,6 +432,8 @@ abstract class _PickerFormFieldState<T> extends FormFieldState<T> {
   TextStyle? get _style;
   TextAlign get _textAlign;
   FocusNode? get _focusNode;
+  bool get _clearable;
+  String? get _clearTooltip;
 
   String _format(T value);
   Future<T?> _pick();
@@ -424,19 +462,59 @@ abstract class _PickerFormFieldState<T> extends FormFieldState<T> {
     }
   }
 
+  void _clear() {
+    if (value == null) return;
+    didChange(null);
+    _notifyChanged(null);
+  }
+
+  /// The decoration's suffix icon, with a clear button before it while the field can be
+  /// cleared.
+  Widget? _suffixIcon(InputDecoration decoration, bool canClear) {
+    final suffixIcon = decoration.suffixIcon;
+    if (!canClear) return suffixIcon;
+    final clearButton = IconButton(
+      icon: const Icon(Icons.clear),
+      tooltip: _clearTooltip ?? MaterialLocalizations.of(context).deleteButtonTooltip,
+      onPressed: _clear,
+    );
+    if (suffixIcon == null) return clearButton;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        clearButton,
+        // Keeps the suffix icon in the same place as when it is shown on its own.
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: kMinInteractiveDimension,
+            minHeight: kMinInteractiveDimension,
+          ),
+          child: Center(child: suffixIcon),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTextField() {
     final value = this.value;
     final text = value == null ? '' : _format(value);
     // The field and its descendants are being built, so updating the text here is safe.
     if (_controller.text != text) _controller.text = text;
     final enabled = widget.enabled;
-    // Enter and Space open the picker too, for keyboard users who reach the field with Tab.
+    final canClear = enabled && _clearable && value != null;
+    final decoration = _decoration.applyDefaults(Theme.of(context).inputDecorationTheme);
+    // Enter and Space open the picker too, for keyboard users who reach the field with Tab,
+    // and Delete and Backspace clear a clearable field.
     return CallbackShortcuts(
       bindings: enabled
           ? {
               const SingleActivator(LogicalKeyboardKey.enter): _onTap,
               const SingleActivator(LogicalKeyboardKey.numpadEnter): _onTap,
               const SingleActivator(LogicalKeyboardKey.space): _onTap,
+              if (canClear) ...{
+                const SingleActivator(LogicalKeyboardKey.delete): _clear,
+                const SingleActivator(LogicalKeyboardKey.backspace): _clear,
+              },
             }
           : const {},
       child: TextField(
@@ -448,9 +526,10 @@ abstract class _PickerFormFieldState<T> extends FormFieldState<T> {
         textAlign: _textAlign,
         enableInteractiveSelection: false,
         mouseCursor: enabled ? SystemMouseCursors.click : null,
-        decoration: _decoration
-            .applyDefaults(Theme.of(context).inputDecorationTheme)
-            .copyWith(errorText: errorText),
+        decoration: decoration.copyWith(
+          errorText: errorText,
+          suffixIcon: _suffixIcon(decoration, canClear),
+        ),
         onTap: enabled ? _onTap : null,
       ),
     );
